@@ -91,9 +91,60 @@ LICENSE file for license information.
          'Category: platform\x7fCategory: external programs\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
         
          tmux = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'tmux' -> () From: ( |
-             {} = 'ModuleInfo: Creator: globals tmux.
+             {} = 'Comment: I give access to the local tmux
+server (assuming one is running).\x7fModuleInfo: Creator: globals tmux.
 '.
             | ) .
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> () From: ( | {
+         'Category: support\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         server = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'tmux' -> 'server' -> () From: ( |
+             {} = 'ModuleInfo: Creator: globals tmux server.
+'.
+            | ) .
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> () From: ( | {
+         'Category: prototypes\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         session = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( |
+             {} = 'ModuleInfo: Creator: globals tmux session.
+'.
+            | ) .
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         contents = ( |
+            | server tmuxCommand: 'capture-pane -t self -p' IfFail: 0).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         name.
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         namespace* = bootstrap stub -> 'globals' -> 'tmux' -> ().
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         parent* = bootstrap stub -> 'traits' -> 'clonable' -> ().
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         sessions = ( |
+            | server listSessions).
         } | ) 
 
 
