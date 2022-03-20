@@ -106,6 +106,22 @@ server (assuming one is running).\x7fModuleInfo: Creator: globals tmux.
             | ) .
         } | ) 
 
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'server' -> () From: ( | {
+         'Category: support\x7fComment: This looks overkill but is needed otherwise tmux does something to the 
+session Self is in which freezes the VM.  rca 2022/03/19\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         tmuxCommand: c IfFail: fb = ( |
+             command.
+             n.
+             out.
+            | 
+            n: (random integer: 2 power: 64) hexPrintString.
+            command: '(cat /dev/null | nohup tmux -C ', c, ' 2>&1 1>/tmp/', n, '; cat /tmp/', n, ') &>/dev/mull'.
+            out: os outputOfCommand: command IfFail: [|:e| ^ fb value: e].
+            os unlink: '/tmp/', n IfFail: [|:e| ^ fb value: e].
+            ((out splitOn: '\n') slice: 1 @ -3) joinUsing: '\n').
+        } | ) 
+
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> () From: ( | {
          'Category: prototypes\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
         
@@ -120,6 +136,44 @@ server (assuming one is running).\x7fModuleInfo: Creator: globals tmux.
         
          contents = ( |
             | server tmuxCommand: 'capture-pane -t self -p' IfFail: 0).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
+         'Category: insert\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         insertBackspace = ( |
+            | insertKey: 'BSpace'. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
+         'Category: insert\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         insertEnter = ( |
+            | insertKey: 'Enter'. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
+         'Category: insert\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         insertKey: k = ( |
+            | 
+            server tmuxCommand: 'send-keys ', k IfFail: self. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
+         'Category: insert\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         insertPrintableChar: k = ( |
+            | 
+            insertKey: '\'', k, '\''. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
+         'Category: insert\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         insertString: s = ( |
+            | 
+            s do: [|:k| insertPrintableChar: k]. self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
