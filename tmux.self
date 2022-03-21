@@ -98,7 +98,7 @@ server (assuming one is running).\x7fModuleInfo: Creator: globals tmux.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> () From: ( | {
-         'Category: support\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
         
          server = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'tmux' -> 'server' -> () From: ( |
              {} = 'ModuleInfo: Creator: globals tmux server.
@@ -107,8 +107,18 @@ server (assuming one is running).\x7fModuleInfo: Creator: globals tmux.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'server' -> () From: ( | {
-         'Category: support\x7fComment: This looks overkill but is needed otherwise tmux does something to the 
-session Self is in which freezes the VM.  rca 2022/03/19\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         newSession = ( |
+             n.
+            | 
+            n: (random integer: 2 power: 64) hexPrintString.
+            tmuxCommand: 'new-session -s ', n IfFail: [|:e| error: e].
+            session copy name: n).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'server' -> () From: ( | {
+         'Category: support\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
         
          tmuxCommand: c IfFail: fb = ( |
              command.
@@ -116,9 +126,13 @@ session Self is in which freezes the VM.  rca 2022/03/19\x7fModuleInfo: Module: 
              out.
             | 
             n: (random integer: 2 power: 64) hexPrintString.
+            " This looks overly complicated but is needed, otherwise tmux writing to the Self console
+              sends a SIGHUP and breaks Self
+            "
             command: '(cat /dev/null | nohup tmux -C ', c, ' 2>&1 1>/tmp/', n, '; cat /tmp/', n, ') &>/dev/mull'.
             out: os outputOfCommand: command IfFail: [|:e| ^ fb value: e].
             os unlink: '/tmp/', n IfFail: [|:e| ^ fb value: e].
+            " Remove wrapping %begin %end "
             ((out splitOn: '\n') slice: 1 @ -3) joinUsing: '\n').
         } | ) 
 
@@ -135,7 +149,20 @@ session Self is in which freezes the VM.  rca 2022/03/19\x7fModuleInfo: Module: 
          'ModuleInfo: Module: tmux InitialContents: FollowSlot'
         
          contents = ( |
-            | server tmuxCommand: 'capture-pane -t self -p' IfFail: 0).
+            | 
+            server tmuxCommand: 'capture-pane -J -t ', name, ' -p' IfFail: 0).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         cursorPosition = ( |
+             list.
+            | 
+            list: server tmuxCommand: 'list-sessions -F \'#{session_name} #{cursor_x} #{cursor_y}\'' IfFail: ''.
+            list: (list splitOn: '\n') mapBy: [|:line| line splitOn: ' '].
+            list: list filterBy: [|:session| session first = name].
+            (list first at: 1) asInteger @ (list first at: 2) asInteger).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
@@ -157,7 +184,7 @@ session Self is in which freezes the VM.  rca 2022/03/19\x7fModuleInfo: Module: 
         
          insertKey: k = ( |
             | 
-            server tmuxCommand: 'send-keys ', k IfFail: self. self).
+            server tmuxCommand: 'send-keys -t ', name, ' ', k IfFail: self. self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
@@ -177,9 +204,16 @@ session Self is in which freezes the VM.  rca 2022/03/19\x7fModuleInfo: Module: 
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
-         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+         'Category: insert\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
         
-         name.
+         insertTab = ( |
+            | insertKey: 'Tab'. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: InitializeToExpression: (\'\')'
+        
+         name <- ''.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
@@ -194,11 +228,238 @@ session Self is in which freezes the VM.  rca 2022/03/19\x7fModuleInfo: Module: 
          parent* = bootstrap stub -> 'traits' -> 'clonable' -> ().
         } | ) 
 
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> () From: ( | {
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
          'ModuleInfo: Module: tmux InitialContents: FollowSlot'
         
-         sessions = ( |
-            | server listSessions).
+         resize: pt = ( |
+            | 
+            server tmuxCommand: 'resize-window -t ', name, ' -x ', pt x asString, ' -y ', pt y asString IfFail: [|:e| error: 'Fail!']. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> () From: ( | {
+         'Category: prototypes\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         tmuxEditorMorph = bootstrap define: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> () ToBe: bootstrap addSlotsTo: (
+             bootstrap remove: 'parent' From:
+             bootstrap remove: 'prototype' From:
+             globals uglyTextEditorMorph copyRemoveAllMorphs ) From: bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> () From: ( |
+             {} = 'ModuleInfo: Creator: globals tmux tmuxEditorMorph.
+
+CopyDowns:
+globals uglyTextEditorMorph. copyRemoveAllMorphs 
+SlotsToOmit: parent prototype.
+
+\x7fIsComplete: '.
+            | ) .
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: private'
+        
+         parent* = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( |
+             {} = 'ModuleInfo: Creator: globals tmux tmuxEditorMorph parent.
+'.
+            | ) .
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         copyDefaultStyle = ( |
+            | copyString: '(not connected)' Style: (| color = paint named: 'white'. fontName = 'courier'. fontSize = 10 | )).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         copyOnNewSession = ( |
+            | copyOnSession: tmux server newSession).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         copyOnSession: s = ( |
+            | copyDefaultStyle tmuxSession: s).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         initializeString: string HPanel: panel Style: style = ( |
+             divider.
+             row.
+            | 
+             color: style color.
+             borderWidth: 2.
+             frameStyle: insetBezelStyle.
+             beRigid.
+
+            text: tmuxTextField copy color: color.
+            text beFlexible.
+            text setText: string.
+
+            divider: frameMorph copy.
+            divider frameStyle: divider insetBezelStyle.
+            divider borderWidth: 1.
+            divider baseMinHeight: 0.
+            divider beShrinkWrapVertically.
+            divider beFlexibleHorizontally.
+            divider color: style color.
+
+            row: rowMorph copy color: color.
+            row borderWidth: 1.
+            row  addMorphLast: text.
+            panel ifNotNil: [ addMorphLast: panel].
+            addMorphLast: divider.
+            addMorphLast: row.
+            resizeToText. 
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
+         'Comment: If we want to use something other than
+(but compatibale with!) ui2_textField\x7fModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: private'
+        
+         initializeString: string Panel: panel Style: style = ( |
+             row.
+            | 
+            borderWidth: 2.
+            frameStyle: insetBezelStyle.
+            beRigid.
+
+            text: tmux tmuxTextField copy.
+            text  beFlexible.
+            text  setText: string.
+            row: rowMorph copy.
+            row  borderWidth: 0.
+            panel ifNotNil: [row  addMorphLast: panel].
+            row  addMorphLast: text.
+            addMorphLast: row.
+            resizeToText. 
+            color: style color.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: public'
+        
+         morphTypeName = 'tmuxEditorMorph'.
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         parent* = bootstrap stub -> 'traits' -> 'uglyTextEditorMorph' -> ().
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         step = ( |
+            | 
+            text refreshContents. 
+            text moveInsertionPointTo: tmuxSession cursorPoint.
+            changed).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> () From: ( | {
+         'Category: filing out\x7fModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: public'
+        
+         prototype = ( |
+            | tmux tmuxEditorMorph).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> () From: ( | {
+         'Category: Tmux State\x7fModuleInfo: Module: tmux InitialContents: InitializeToExpression: (tmux session)'
+        
+         tmuxSession <- bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> ().
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> () From: ( | {
+         'Category: prototypes\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         tmuxTextField = bootstrap define: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> () ToBe: bootstrap addSlotsTo: (
+             bootstrap remove: 'parent' From:
+             bootstrap remove: 'prototype' From:
+             globals ui2_textField copyRemoveAllMorphs ) From: bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> () From: ( |
+             {} = 'ModuleInfo: Creator: globals tmux tmuxTextField.
+
+CopyDowns:
+globals ui2_textField. copyRemoveAllMorphs 
+SlotsToOmit: parent prototype.
+
+\x7fIsComplete: '.
+            | ) .
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: private'
+        
+         parent* = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> 'parent' -> () From: ( |
+             {} = 'ModuleInfo: Creator: globals tmux tmuxTextField parent.
+'.
+            | ) .
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: public'
+        
+         backspace = ( |
+            | 
+            tmuxSession insertBackspace. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: public'
+        
+         insert_char: char = ( |
+            | 
+            char = '  ' 
+               ifTrue: [tmuxSession insertTab]
+                False: [tmuxSession insertPrintableChar: char].
+             self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: public'
+        
+         morphTypeName = 'tmuxTextField'.
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: private'
+        
+         parent* = bootstrap stub -> 'traits' -> 'ui2_textField' -> ().
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         refreshContents = ( |
+            | setText: tmuxSession contents. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: public'
+        
+         split_line = ( |
+            | 
+            tmuxSession insertEnter. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         tmuxSession = ( |
+            | owner owner tmuxSession).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> () From: ( | {
+         'Category: filing out\x7fModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: public'
+        
+         prototype = ( |
+            | tmux tmuxTextField).
         } | ) 
 
 
