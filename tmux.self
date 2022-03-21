@@ -359,7 +359,7 @@ SlotsToOmit: parent prototype.
          step = ( |
             | 
             text refreshContents. 
-            text moveInsertionPointTo: tmuxSession cursorPoint.
+            text moveInsertionPointTo: tmuxSession cursorPosition.
             changed).
         } | ) 
 
