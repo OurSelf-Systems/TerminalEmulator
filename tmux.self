@@ -133,6 +133,7 @@ server (assuming one is running).\x7fModuleInfo: Creator: globals tmux.
             out: os outputOfCommand: command IfFail: [|:e| ^ fb value: e].
             os unlink: '/tmp/', n IfFail: [|:e| ^ fb value: e].
             " Remove wrapping %begin %end "
+            '' = out ifTrue: [^ ''].
             ((out splitOn: '\n') slice: 1 @ -3) joinUsing: '\n').
         } | ) 
 
@@ -150,7 +151,7 @@ server (assuming one is running).\x7fModuleInfo: Creator: globals tmux.
         
          contents = ( |
             | 
-            server tmuxCommand: 'capture-pane -J -t ', name, ' -p' IfFail: 0).
+            server tmuxCommand: 'capture-pane -J -t ', name, ' -p' IfFail: '(Not Connected)').
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
@@ -159,9 +160,10 @@ server (assuming one is running).\x7fModuleInfo: Creator: globals tmux.
          cursorPosition = ( |
              list.
             | 
-            list: server tmuxCommand: 'list-sessions -F \'#{session_name} #{cursor_x} #{cursor_y}\'' IfFail: ''.
+            list: server tmuxCommand: 'list-sessions -F \'#{session_name} #{cursor_x} #{cursor_y}\'' IfFail: [name, ' 0 0'].
             list: (list splitOn: '\n') mapBy: [|:line| line splitOn: ' '].
             list: list filterBy: [|:session| session first = name].
+            list isEmpty ifTrue: [^  0 @ 0 ].
             (list first at: 1) asInteger @ (list first at: 2) asInteger).
         } | ) 
 
@@ -175,8 +177,22 @@ server (assuming one is running).\x7fModuleInfo: Creator: globals tmux.
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
          'Category: insert\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
         
+         insertDownArrow = ( |
+            | insertKey: 'Down'. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
+         'Category: insert\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
          insertEnter = ( |
             | insertKey: 'Enter'. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
+         'Category: insert\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         insertEscape = ( |
+            | insertKey: 'Escape'. self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
@@ -190,9 +206,23 @@ server (assuming one is running).\x7fModuleInfo: Creator: globals tmux.
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
          'Category: insert\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
         
+         insertLeftArrow = ( |
+            | insertKey: 'Left'. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
+         'Category: insert\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
          insertPrintableChar: k = ( |
             | 
             insertKey: '\'', k, '\''. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
+         'Category: insert\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         insertRightArrow = ( |
+            | insertKey: 'Right'. self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
@@ -208,6 +238,13 @@ server (assuming one is running).\x7fModuleInfo: Creator: globals tmux.
         
          insertTab = ( |
             | insertKey: 'Tab'. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
+         'Category: insert\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         insertUpArrow = ( |
+            | insertKey: 'Up'. self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
@@ -413,6 +450,29 @@ SlotsToOmit: parent prototype.
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> 'parent' -> () From: ( | {
          'ModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: public'
         
+         backward_char = ( |
+            | 
+            tmuxSession insertLeftArrow. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> 'parent' -> () From: ( | {
+         'Comment: This is sent for escape key - override\x7fModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: public'
+        
+         cancelTextChanges: evt = ( |
+            | 
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: public'
+        
+         forward_char = ( |
+            | tmuxSession insertRightArrow. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: public'
+        
          insert_char: char = ( |
             | 
             char = '  ' 
@@ -428,9 +488,25 @@ SlotsToOmit: parent prototype.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: public'
+        
+         next_line = ( |
+            | 
+            tmuxSession insertDownArrow. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> 'parent' -> () From: ( | {
          'ModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: private'
         
          parent* = bootstrap stub -> 'traits' -> 'ui2_textField' -> ().
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: public'
+        
+         previous_line = ( |
+            | 
+            tmuxSession insertUpArrow. self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> 'parent' -> () From: ( | {
