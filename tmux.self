@@ -215,7 +215,10 @@ server (assuming one is running).\x7fModuleInfo: Creator: globals tmux.
         
          insertPrintableChar: k = ( |
             | 
-            insertKey: '\'', k, '\''. self).
+            '\'' = k 
+              ifTrue: [insertKey: '"\'"']
+               False: [insertKey: '\'', k, '\''].
+            self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
@@ -475,7 +478,10 @@ SlotsToOmit: parent prototype.
         
          insert_char: char = ( |
             | 
-            char = '  ' 
+            " This doesn't work. This is because tabs are turned
+              into two spaces above us! BAD SELF NO COOKIE
+            "  
+             = '  '  
                ifTrue: [tmuxSession insertTab]
                 False: [tmuxSession insertPrintableChar: char].
              self).
