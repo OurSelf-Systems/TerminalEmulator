@@ -455,9 +455,15 @@ SlotsToOmit: parent prototype.
         
          step = ( |
             | 
-            text setText: tmuxContents. 
-            text moveInsertionPointTo: tmuxCursorPosition.
-            changed).
+            tmuxContents = tmuxContentsOld 
+              ifFalse: [tmuxContentsOld: tmuxContents. 
+                        text setText: tmuxContents.
+                        changed]. 
+            tmuxCursorPosition = tmuxCursorPositionOld
+              ifFalse: [tmuxCursorPositionOld: tmuxCursorPosition.
+                        text moveInsertionPointTo: tmuxCursorPosition.
+                        changed].
+            self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
@@ -487,15 +493,27 @@ SlotsToOmit: parent prototype.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> () From: ( | {
+         'Category: Tmux State\x7fModuleInfo: Module: tmux InitialContents: InitializeToExpression: (\'\')'
+        
+         tmuxContentsOld <- ''.
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> () From: ( | {
          'Category: Tmux State\x7fModuleInfo: Module: tmux InitialContents: InitializeToExpression: (0 @ 0)'
         
          tmuxCursorPosition <- 0 @ 0.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> () From: ( | {
-         'Category: Tmux State\x7fModuleInfo: Module: tmux InitialContents: InitializeToExpression: (nil)'
+         'Category: Tmux State\x7fModuleInfo: Module: tmux InitialContents: InitializeToExpression: ((0)@(0))'
         
-         tmuxLoopProcess.
+         tmuxCursorPositionOld <- (0)@(0).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> () From: ( | {
+         'Category: Tmux State\x7fModuleInfo: Module: tmux InitialContents: InitializeToExpression: (tmux tmuxEditorMorph dead_tmux_loop_process)'
+        
+         tmuxLoopProcess <- bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> 'dead_tmux_loop_process' -> ().
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> () From: ( | {
@@ -551,7 +569,7 @@ SlotsToOmit: parent prototype.
         
          cancelTextChanges: evt = ( |
             | 
-            self).
+            tmuxSesson insertEscape. self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> 'parent' -> () From: ( | {
@@ -566,13 +584,8 @@ SlotsToOmit: parent prototype.
         
          insert_char: char = ( |
             | 
-            " This doesn't work. This is because tabs are turned
-              into two spaces above us! BAD SELF NO COOKIE
-            "  
-             = '  '  
-               ifTrue: [tmuxSession insertTab]
-                False: [tmuxSession insertPrintableChar: char].
-             self).
+            tmuxSession insertPrintableChar: char.
+            self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> 'parent' -> () From: ( | {
@@ -626,6 +639,13 @@ SlotsToOmit: parent prototype.
          split_line = ( |
             | 
             tmuxSession insertEnter. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         tab = ( |
+            | tmuxSession insertTab. self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> 'parent' -> () From: ( | {
