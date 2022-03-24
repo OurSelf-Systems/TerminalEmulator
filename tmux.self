@@ -294,6 +294,12 @@ SlotsToOmit: parent prototype.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> () From: ( | {
+         'Category: Tmux State\x7fModuleInfo: Module: tmux InitialContents: InitializeToExpression: (false)'
+        
+         isConnected <- bootstrap stub -> 'globals' -> 'false' -> ().
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> () From: ( | {
          'ModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: private'
         
          parent* = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( |
@@ -308,8 +314,8 @@ SlotsToOmit: parent prototype.
          connect = ( |
             | 
             isConnected ifFalse: [
-              (message copy receiver: self Selector: 'tmuxLoop') fork.
-              getSteppedEveryMSecs: 100]. 
+              getSteppedEveryMSecs: 100.
+              isConnected: true]. 
             self).
         } | ) 
 
@@ -324,7 +330,8 @@ SlotsToOmit: parent prototype.
          'ModuleInfo: Module: tmux InitialContents: FollowSlot'
         
          copyOnNewSession = ( |
-            | copyOnSession: tmux server newSession).
+            | 
+            copyOnSession: (channel copyOn: tmux server newSession) waitingInboxTimeOut: 1000 IfTimedOut: nil).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
@@ -337,39 +344,10 @@ SlotsToOmit: parent prototype.
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
          'ModuleInfo: Module: tmux InitialContents: FollowSlot'
         
-         dead_tmux_loop_process = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> 'dead_tmux_loop_process' -> () From: ( |
-             {} = 'ModuleInfo: Creator: globals tmux tmuxEditorMorph parent dead_tmux_loop_process.
-'.
-            | ) .
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> 'dead_tmux_loop_process' -> () From: ( | {
-         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
-        
-         abortIfAlive = ( |
-            | self).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> 'dead_tmux_loop_process' -> () From: ( | {
-         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
-        
-         isAlive = bootstrap stub -> 'globals' -> 'false' -> ().
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> 'dead_tmux_loop_process' -> () From: ( | {
-         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
-        
-         parent* = bootstrap stub -> 'traits' -> 'oddball' -> ().
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
-         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
-        
          disconnect = ( |
             | 
-            tmuxLoopProcess abortIfLive. 
-            tmuxLoopProcess: dead_tmux_loop_process. 
-            stopGettingStepped. self).
+            stopGettingStepped. 
+            isConnected: false. self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
@@ -431,14 +409,6 @@ SlotsToOmit: parent prototype.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
-         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
-        
-         isConnected = ( |
-            | 
-            tmuxLoopProcess isAlive).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
          'ModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: public'
         
          morphTypeName = 'tmuxEditorMorph'.
@@ -453,8 +423,19 @@ SlotsToOmit: parent prototype.
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
          'ModuleInfo: Module: tmux InitialContents: FollowSlot'
         
+         refreshTmux = ( |
+            | 
+            tmuxContents: (tmuxSession contents) ifNil: [^ self].
+            tmuxCursorPosition: (tmuxSession cursorPosition) ifNil: [^ self].
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
          step = ( |
             | 
+            (message copy receiver: self Selector: 'refreshTmux') fork.
             tmuxContents = tmuxContentsOld 
               ifFalse: [tmuxContentsOld: tmuxContents. 
                         text setText: tmuxContents.
@@ -464,19 +445,6 @@ SlotsToOmit: parent prototype.
                         text moveInsertionPointTo: tmuxCursorPosition.
                         changed].
             self).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
-         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
-        
-         tmuxLoop = ( |
-            | 
-            tmuxLoopProcess: process this.
-            [
-              tmuxContents: tmuxSession contents. 
-              tmuxCursorPosition: tmuxSession cursorPosition.
-              process this sleep: 100
-            ] loop).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> () From: ( | {
@@ -508,12 +476,6 @@ SlotsToOmit: parent prototype.
          'Category: Tmux State\x7fModuleInfo: Module: tmux InitialContents: InitializeToExpression: ((0)@(0))'
         
          tmuxCursorPositionOld <- (0)@(0).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> () From: ( | {
-         'Category: Tmux State\x7fModuleInfo: Module: tmux InitialContents: InitializeToExpression: (tmux tmuxEditorMorph dead_tmux_loop_process)'
-        
-         tmuxLoopProcess <- bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> 'dead_tmux_loop_process' -> ().
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> () From: ( | {
@@ -569,7 +531,7 @@ SlotsToOmit: parent prototype.
         
          cancelTextChanges: evt = ( |
             | 
-            tmuxSesson insertEscape. self).
+            tmuxSession insertEscape. self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> 'parent' -> () From: ( | {
