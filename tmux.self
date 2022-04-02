@@ -861,7 +861,7 @@ SlotsToOmit: parent prototype.
             | 
             rawCursorPosition: rawCursorPosition x pred @ rawCursorPosition y. 
             rawCursorPosition x < 0 ifTrue: [
-              rawCursorPosition: awContents width @ rawCursorPosition y pred].
+              rawCursorPosition: rawContents width @ rawCursorPosition y pred].
             self).
         } | ) 
 
@@ -1287,7 +1287,7 @@ SlotsToOmit: parent prototype.
          contributeToBackgroundMenu: m = ( |
             | 
             m addButton: ( (ui2Button copy scriptBlock: [event sourceHand attach: tmux terminalMorph copy]) 
-                                                 label: 'New Unix Shell' )
+                                                 label: 'New Unix Terminal' )
                 ToGroup: 'top').
         } | ) 
 
