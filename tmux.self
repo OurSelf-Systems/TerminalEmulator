@@ -1,4 +1,4 @@
- '0.1.0'
+ '0.2.0'
  '
 Copyright 2022 Russell Allen
 LICENSE file for license information.
@@ -65,13 +65,15 @@ LICENSE file for license information.
          'ModuleInfo: Module: tmux InitialContents: FollowSlot'
         
          postFileIn = ( |
-            | resend.postFileIn).
+            | 
+            worldMorph addBackgroundMenuContributor: tmux terminalMorph.
+            resend.postFileIn).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'modules' -> 'tmux' -> () From: ( | {
-         'ModuleInfo: Module: tmux InitialContents: InitializeToExpression: (\'0.1.0\')\x7fVisibility: public'
+         'ModuleInfo: Module: tmux InitialContents: InitializeToExpression: (\'0.2.0\')\x7fVisibility: public'
         
-         revision <- '0.1.0'.
+         revision <- '0.2.0'.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'modules' -> 'tmux' -> () From: ( | {
@@ -653,6 +655,92 @@ server (assuming one is running).\x7fModuleInfo: Creator: globals tmux.
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> () From: ( | {
          'ModuleInfo: Module: tmux InitialContents: FollowSlot'
         
+         morphLabel = bootstrap define: bootstrap stub -> 'globals' -> 'tmux' -> 'morphLabel' -> () ToBe: bootstrap addSlotsTo: (
+             bootstrap remove: 'parent' From:
+             bootstrap remove: 'prototype' From:
+             globals rowMorph copyRemoveAllMorphs ) From: bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'tmux' -> 'morphLabel' -> () From: ( |
+             {} = 'ModuleInfo: Creator: globals tmux morphLabel.
+
+CopyDowns:
+globals rowMorph. copyRemoveAllMorphs 
+SlotsToOmit: parent prototype.
+
+\x7fIsComplete: '.
+            | ) .
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'morphLabel' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: private'
+        
+         parent* = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'tmux' -> 'morphLabel' -> 'parent' -> () From: ( |
+             {} = 'ModuleInfo: Creator: globals tmux morphLabel parent.
+'.
+            | ) .
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'morphLabel' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         closeButtonOn: m = ( |
+             b.
+            | 
+            b: ui2Button copy.
+            b label: 'X'.
+            b target: m.
+            b scriptBlock: [target animatedDelete].
+            b).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'morphLabel' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         copyOn: ownerMorph = ( |
+             m.
+            | 
+            m: resend.copy.
+            m color: paint named: 'outlinerGray'.
+            m borderWidth: 6.
+            [ 
+              m addMorphLast: expanderMorph copy.
+              m addMorphLast: spacer.
+            ].
+            m addMorphLast: labelMorph copy label: 'Terminal'.
+            m addMorphLast: spacer.
+            m addMorphLast: closeButtonOn: ownerMorph.
+            m beFlexible.
+            m).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'morphLabel' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: public'
+        
+         morphTypeName = 'tmux morphLabel'.
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'morphLabel' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: public'
+        
+         parent* = bootstrap stub -> 'traits' -> 'rowMorph' -> ().
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'morphLabel' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         spacer = ( |
+            | 
+            transparentSpacerMorph copyV: 6).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'morphLabel' -> () From: ( | {
+         'Category: filing out\x7fModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: public'
+        
+         prototype = ( |
+            | tmux morphLabel).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
          server = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'tmux' -> 'server' -> () From: ( |
              {} = 'ModuleInfo: Creator: globals tmux server.
 '.
@@ -1161,6 +1249,119 @@ server (assuming one is running).\x7fModuleInfo: Creator: globals tmux.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         terminalMorph = bootstrap define: bootstrap stub -> 'globals' -> 'tmux' -> 'terminalMorph' -> () ToBe: bootstrap addSlotsTo: (
+             bootstrap remove: 'parent' From:
+             bootstrap remove: 'prototype' From:
+             globals frameMorph copyRemoveAllMorphs ) From: bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'tmux' -> 'terminalMorph' -> () From: ( |
+             {} = 'ModuleInfo: Creator: globals tmux terminalMorph.
+
+CopyDowns:
+globals frameMorph. copyRemoveAllMorphs 
+SlotsToOmit: parent prototype.
+
+\x7fIsComplete: '.
+            | ) .
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'terminalMorph' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: private'
+        
+         parent* = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'tmux' -> 'terminalMorph' -> 'parent' -> () From: ( |
+             {} = 'ModuleInfo: Creator: globals tmux terminalMorph parent.
+'.
+            | ) .
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'terminalMorph' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         animatedDelete = ( |
+            | disconnect. resend.animatedDelete).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'terminalMorph' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         contributeToBackgroundMenu: m = ( |
+            | 
+            m addButton: ( (ui2Button copy scriptBlock: [event sourceHand attach: tmux terminalMorph copy]) 
+                                                 label: 'New Unix Shell' )
+                ToGroup: 'top').
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'terminalMorph' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         copy = ( |
+             cm.
+             m.
+             rm.
+            | 
+            m: resend.copy.
+            m borderWidth: 3.
+            m color: paint named: 'outlinerGray'.
+            cm: columnMorph copy color: paint named: 'transparent'.
+            cm addMorphLast: tmux morphLabel copyOn: m.
+            m textPane: tmux tmuxEditorMorph copyOnNewSession.
+
+            rm: frameMorph copy.
+            rm color: paint named: 'outlinerGray'.
+            rm frameStyle: rm insetBezelStyle.
+            rm borderWidth: 3.
+            rm addMorph: m textPane.
+
+            cm addMorphLast: rm.
+            cm borderWidth: 0.
+            cm beShrinkWrapVertically.
+            cm beFlexibleHorizontally.
+            m addMorph: cm.
+            m beShrinkWrap.
+            m).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'terminalMorph' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         disconnect = ( |
+            | textPane disconnect. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'terminalMorph' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: public'
+        
+         justDroppedInto: w Event: evt = ( |
+            | 
+            isInWorld ifTrue: [ textPane connect ]).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'terminalMorph' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         morphTypeName = 'tmux terminalMorph'.
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'terminalMorph' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: public'
+        
+         parent* = bootstrap stub -> 'traits' -> 'frameMorph' -> ().
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'terminalMorph' -> () From: ( | {
+         'Category: filing out\x7fModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: public'
+        
+         prototype = ( |
+            | tmux terminalMorph).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'terminalMorph' -> () From: ( | {
+         'Category: terminalMorph State\x7fModuleInfo: Module: tmux InitialContents: InitializeToExpression: (nil)'
+        
+         textPane.
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> () From: ( | {
          'Category: prototypes\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
         
          tmuxEditorMorph = bootstrap define: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> () ToBe: bootstrap addSlotsTo: (
@@ -1294,14 +1495,6 @@ SlotsToOmit: parent prototype.
             resizeToText. 
             color: style color.
             self).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
-         'ModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: public'
-        
-         justDroppedInto: w Event: evt = ( |
-            | 
-            isInWorld ifTrue: [ connect ]).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
