@@ -803,7 +803,7 @@ SlotsToOmit: parent prototype.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
-         'Category: rendering\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+         'Category: support\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
         
          addNewLinesIfNeeded = ( |
             | 
@@ -836,26 +836,33 @@ SlotsToOmit: parent prototype.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
-         'Category: rendering\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+         'Category: cursor\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         cursorHome = ( |
+            | rawCursorPosition: 0 @( rawCursorPosition y - rawContentsView). self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: cursor\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
         
          cursorNext = ( |
             | 
             rawCursorPosition: rawCursorPosition x succ @ rawCursorPosition y. 
             rawCursorPosition x >= rawContents width ifTrue: [
               rawCursorPosition: (rawCursorPosition x - rawContents width) @ rawCursorPosition y succ].
-            addNewLinesIfNeeded.
-            self).
+             addNewLinesIfNeeded.
+             self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
-         'Category: rendering\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+         'Category: cursor\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
         
          cursorPosition = ( |
             | rawCursorPosition).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
-         'Category: rendering\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+         'Category: cursor\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
         
          cursorPrevious = ( |
             | 
@@ -979,26 +986,75 @@ SlotsToOmit: parent prototype.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
-         'Category: rendering\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+         'Category: parsing\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
         
-         renderBeep = ( |
-            | "Not implemented" self).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
-         'Category: rendering\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
-        
-         renderNewLine = ( |
+         render: c = ( |
             | 
-            rawCursorPosition: 0 @ rawCursorPosition y succ.
-            addNewLinesIfNeeded.
+            renderState: renderState render: c To: self. 
+            trimBuffer.
             self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
-         'Category: rendering\x7fComment: Tabstops hardwired at 8 spaces\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+         'Category: rendering\x7fComment: BS - Backspace
+Move the cursor one position to the left\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
         
-         renderTab = ( |
+         renderBackspace = ( |
+            | cursorPrevious).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: rendering\x7fComment: BEL - Bell
+Ring the bell\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         renderBell = ( |
+            | self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: rendering\x7fComment: CR - Carriage Return
+Move the cursor to the beginning of the row\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         renderCarriageReturn = ( |
+            | 
+            rawCursorPosition: 0 @ rawCursorPosition y.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: rendering\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         renderCleareol = ( |
+             cp.
+             size.
+             str.
+            | 
+            cp: rawCursorPosition.
+            size: rawContents width - rawCursorPosition x.
+            str: mutableString copySize: size FillingWith: ' '.
+            updateBufferFrom: str.
+            rawCursorPosition: cp.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: rendering\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         renderEscapeHome = ( |
+             str.
+            | 
+            str: mutableString copySize: rawContentsView FillingWith: '\n'.
+            updateBufferFrom: str.
+            cursorHome.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: rendering\x7fComment: HT - Horizontal Tabulation
+Move the cursor to the next character tab stop.
+(Tabstops hardwired at 8 spaces)\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         renderHorizontalTabulation = ( |
              s.
              t = 8.
             | 
@@ -1008,11 +1064,145 @@ SlotsToOmit: parent prototype.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: rendering\x7fComment: LF - Line Feed
+Move the cursor one row down, scrolling if neeeded\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         renderLineFeed = ( |
+            | 
+            rawCursorPosition: rawCursorPosition x @ rawCursorPosition y succ.
+            addNewLinesIfNeeded.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: rendering\x7fComment: NUL - Null
+NUL is ignored\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         renderNull = ( |
+            | self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: rendering\x7fComment: This is a printable character. Put on the screen and advance the cursor
+(wrapping if needed)\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         renderPrintable: c = ( |
+            | 
+            rawContents at: rawCursorPosition Put: c IfOutside: [error value]. 
+            cursorNext.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: parsing\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         rendererC0 = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'rendererC0' -> () From: ( |
+             {} = 'ModuleInfo: Creator: globals tmux session parent rendererC0.
+'.
+            | ) .
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'rendererC0' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         parent* = bootstrap stub -> 'traits' -> 'oddball' -> ().
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'rendererC0' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         render: c To: b = ( |
+            | 
+            case
+                if: ['\x00' = c] Then: [b renderNull]
+                If: ['\x07' = c] Then: [b renderBell]
+                If: ['\x08' = c] Then: [b renderBackspace]
+                If: ['\x09' = c] Then: [b renderHorizontalTabulation]
+                If: ['\x0A' = c] Then: [b renderLineFeed]
+                If: ['\x0B' = c] Then: [b renderLineFeed]
+                If: ['\x0C' = c] Then: [b renderLineFeed]
+                If: ['\x0D' = c] Then: [b renderCarriageReturn]
+                If: ['\x1B' = c] Then: [^ b rendererESC]
+                If: [c isPrintable not] Then: [self]
+                Else: [b renderPrintable: c].
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: parsing\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         rendererCSI = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'rendererCSI' -> () From: ( |
+             {} = 'ModuleInfo: Creator: globals tmux session parent rendererCSI.
+'.
+            | ) .
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'rendererCSI' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         parent* = bootstrap stub -> 'traits' -> 'oddball' -> ().
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'rendererCSI' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         render: c To: b = ( |
+            | 
+            case
+              if: ['K' = c] Then: [b renderCleareol. b rendererC0]
+              If: ['J' = c] Then: [b renderCarriageReturn. b rendererC0]
+              If: ['H' = c] Then: [b renderEscapeHome. b rendererC0]
+              Else: [b renderPrintable: c].
+            b rendererC0).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: parsing\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         rendererESC = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'rendererESC' -> () From: ( |
+             {} = 'ModuleInfo: Creator: globals tmux session parent rendererESC.
+'.
+            | ) .
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'rendererESC' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         parent* = bootstrap stub -> 'traits' -> 'oddball' -> ().
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'rendererESC' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         render: c To: b = ( |
+            | 
+            case
+                if: ['[' = c] Then: [b rendererCSI]
+                Else: [" Unknown escape " 
+                       b renderPrintable: '^'.
+                       b rendererC0]).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: parsing\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         resetRenderer = ( |
+            | renderState: rendererC0).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
          'ModuleInfo: Module: tmux InitialContents: FollowSlot'
         
          resize: pt = ( |
             | 
             self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         setViewHeight: h = ( |
+            | rawContentsView: h. self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
@@ -1028,29 +1218,11 @@ SlotsToOmit: parent prototype.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
-         'Category: rendering\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+         'Category: parsing\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
         
          updateBuffer = ( |
-            | updateBufferFrom: connection readIfFail: ''. self).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
-         'Category: rendering\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
-        
-         updateBufferFrom: s = ( |
             | 
-            s do: [|:c| 
-              case
-                if: ['\n' = c]   Then: [renderNewLine]
-                If: ['\r' = c]   Then: [self]
-                If: ['\t' = c]   Then: [renderTab]
-                If: ['\a' = c]   Then: [renderBeep]
-                If: ['\b' = c]   Then: [cursorPrevious]
-                If: [c isPrintable not] Then: [updateBufferFrom: '[', c asByte hexPrintString, ']']
-                Else: [
-                  rawContents at: rawCursorPosition Put: c IfOutside: [error value]. 
-                  cursorNext]].
-            trimBuffer.
+            (connection readIfFail: '') do: [|:c| render: c].
             self).
         } | ) 
 
@@ -1070,6 +1242,12 @@ SlotsToOmit: parent prototype.
          'Category: internal state\x7fModuleInfo: Module: tmux InitialContents: InitializeToExpression: ((0)@(0))'
         
          rawCursorPosition <- (0)@(0).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
+         'Category: internal state\x7fModuleInfo: Module: tmux InitialContents: InitializeToExpression: (tmux session rendererC0)'
+        
+         renderState <- bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'rendererC0' -> ().
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> () From: ( | {
@@ -1408,13 +1586,6 @@ SlotsToOmit: parent prototype.
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
          'ModuleInfo: Module: tmux InitialContents: FollowSlot'
         
-         copyDefaultStyle = ( |
-            | copyString: '(not connected)' Style: (| color = paint named: 'white'. fontName = 'courier'. fontSize = 10 | )).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
-         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
-        
          copyOnNewSession = ( |
              n.
              s.
@@ -1440,42 +1611,7 @@ SlotsToOmit: parent prototype.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
-         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
-        
-         initializeString: string HPanel: panel Style: style = ( |
-             divider.
-             row.
-            | 
-             color: style color.
-             borderWidth: 2.
-             frameStyle: insetBezelStyle.
-             beRigid.
-
-            text: tmuxTextField copy color: color.
-            text beFlexible.
-            text setText: string.
-
-            divider: frameMorph copy.
-            divider frameStyle: divider insetBezelStyle.
-            divider borderWidth: 1.
-            divider baseMinHeight: 0.
-            divider beShrinkWrapVertically.
-            divider beFlexibleHorizontally.
-            divider color: style color.
-
-            row: rowMorph copy color: color.
-            row borderWidth: 1.
-            row  addMorphLast: text.
-            panel ifNotNil: [ addMorphLast: panel].
-            addMorphLast: divider.
-            addMorphLast: row.
-            resizeToText. 
-            self).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
-         'Comment: If we want to use something other than
-(but compatibale with!) ui2_textField\x7fModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: private'
+         'Comment: Called from copyString:Style:\x7fModuleInfo: Module: tmux InitialContents: FollowSlot\x7fVisibility: private'
         
          initializeString: string Panel: panel Style: style = ( |
              row.
@@ -1552,6 +1688,7 @@ SlotsToOmit: parent prototype.
               ifFalse: [tmuxCursorPositionOld: tmuxCursorPosition.
                         text moveInsertionPointTo: tmuxCursorPosition.
                         changed].
+            tmuxSession setViewHeight: text linesInView.
             self).
         } | ) 
 
@@ -1670,8 +1807,8 @@ SlotsToOmit: parent prototype.
          keyDown: e = ( |
             | 
             owner owner isConnected 
-               ifTrue: [^ resend.keyDown: e]
-                False: [^ dropThroughMarker ]).
+               ifTrue: [resend.keyDown: e]
+                False: [dropThroughMarker ]).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'tmuxTextField' -> 'parent' -> () From: ( | {
