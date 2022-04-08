@@ -793,10 +793,19 @@ SlotsToOmit: parent prototype.
          connection <- bootstrap stub -> 'globals' -> 'tmux' -> 'bash' -> ().
         } | ) 
 
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
-         'Category: internal state\x7fModuleInfo: Module: tmux InitialContents: InitializeToExpression: (1 _AsObject)'
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: parsing\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
         
-         incomingBuffer <- 1 _AsObject.
+         charBuffer = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'charBuffer' -> () From: ( |
+             {} = 'ModuleInfo: Creator: globals tmux session parent charBuffer.
+'.
+            | ) .
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
+         'Category: internal state\x7fModuleInfo: Module: tmux InitialContents: InitializeToExpression: (tmux session charBuffer)'
+        
+         incomingBuffer <- bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'charBuffer' -> ().
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> () From: ( | {
@@ -816,15 +825,6 @@ SlotsToOmit: parent prototype.
             [rawCursorPosition y >= rawContents height] whileTrue: [
               rawContents height: rawContents height + 1].
             self).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
-         'Category: parsing\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
-        
-         charBuffer = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'charBuffer' -> () From: ( |
-             {} = 'ModuleInfo: Creator: globals tmux session parent charBuffer.
-'.
-            | ) .
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'charBuffer' -> () From: ( | {
