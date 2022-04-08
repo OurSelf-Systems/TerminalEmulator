@@ -240,7 +240,7 @@ server (assuming one is running).\x7fModuleInfo: Creator: globals tmux.
          'ModuleInfo: Module: tmux InitialContents: FollowSlot'
         
          buffer = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'tmux' -> 'buffer' -> () From: ( |
-             {} = 'ModuleInfo: Creator: globals tmux buffer.
+             {} = 'Comment: Buffer for Terminal\x7fModuleInfo: Creator: globals tmux buffer.
 '.
             | ) .
         } | ) 
@@ -881,7 +881,8 @@ SlotsToOmit: parent prototype.
          'ModuleInfo: Module: tmux InitialContents: FollowSlot'
         
          putString: str = ( |
-            | str do: [|:c| put: c]. self).
+            | 
+            contents: contents, str. self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
@@ -923,7 +924,8 @@ SlotsToOmit: parent prototype.
          'Category: cursor\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
         
          cursorHome = ( |
-            | rawCursorPosition: 0 @( rawCursorPosition y - rawContentsView). self).
+            | 
+            cursorPositionInView: 0 @ 0).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
@@ -943,6 +945,13 @@ SlotsToOmit: parent prototype.
         
          cursorPosition = ( |
             | rawCursorPosition).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: cursor\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         cursorPositionInView: pt = ( |
+            | rawCursorPosition: pt x @ (( rawCursorPosition y - rawContentsView) + pt y). self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
@@ -1074,6 +1083,7 @@ SlotsToOmit: parent prototype.
         
          render: str = ( |
             | 
+            [str isEmpty ifFalse: [(str copy replace: '\x1B' With: '^') printLine]].
             incomingBuffer putString: str.
             [incomingBuffer isEmpty] whileFalse: [
               renderState: renderState dispatch: incomingBuffer To: self From: renderState]. 
@@ -1118,9 +1128,20 @@ Move the cursor to the beginning of the row\x7fModuleInfo: Module: tmux InitialC
             cp: rawCursorPosition.
             size: rawContents width - rawCursorPosition x.
             str: mutableString copySize: size FillingWith: ' '.
-            render: str.
+            renderPrintableString: str.
             rawCursorPosition: cp.
             self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: rendering\x7fComment: CUP - Cursor Position
+Move cursor to position, default 1 @ 1 
+(ie top left)\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         renderCursorPosition: pt = ( |
+            | 
+            "Adjust as we use 0 based indexing in internal buffer"
+            cursorPositionInView: (pt x - 1) @ (pt y - 1). self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
@@ -1128,20 +1149,14 @@ Move the cursor to the beginning of the row\x7fModuleInfo: Module: tmux InitialC
 Erase various parts of the viewport\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
         
          renderEraseInDisplay: n = ( |
-            | 
-            render: '[ED2]').
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
-         'Category: rendering\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
-        
-         renderEscapeHome = ( |
              str.
             | 
-            str: mutableString copySize: rawContentsView FillingWith: '\n'.
-            render: str.
-            cursorHome.
-            self).
+            0 = n ifTrue: [| p |
+              p: rawCursorPosition.
+              str: mutableString copySize: rawContentsView * rawContents width FillingWith: ' '.
+              renderPrintableString: str.
+              rawCursorPosition: p]
+            False: [render: '[ED', n asString, ']']).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
@@ -1154,7 +1169,7 @@ Move the cursor to the next character tab stop.
              t = 8.
             | 
             s: '' padOnRight: t - (rawCursorPosition x % t).
-            render: s.
+            renderPrintableString: s.
             self).
         } | ) 
 
@@ -1185,10 +1200,17 @@ NUL is ignored\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
          renderPrintable: c = ( |
              pc.
             | 
-            pc: c isPrintable ifTrue: [c] False: ['-'].
+            pc: c isPrintable ifTrue: [c] False: [^ ('\\x', c asByte hexPrintString) do: [|:x| renderPrintable: x]].
             rawContents at: rawCursorPosition Put: pc IfOutside: [error value]. 
             cursorNext.
             self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: rendering\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         renderPrintableString: str = ( |
+            | str do: [|:char| renderPrintable: char]. self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
@@ -1210,7 +1232,10 @@ NUL is ignored\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
          'Category: parsing\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
         
          states = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'states' -> () From: ( |
-             {} = 'ModuleInfo: Creator: globals tmux session parent states.
+             {} = 'Comment: Basic structure is from:
+https://vt100.net/emu/dec_ansi_parser
+but only a small subset of codes have been
+implemented.\x7fModuleInfo: Creator: globals tmux session parent states.
 '.
             | ) .
         } | ) 
@@ -1228,18 +1253,23 @@ NUL is ignored\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
          'ModuleInfo: Module: tmux InitialContents: FollowSlot'
         
          action: buffer To: renderer = ( |
-             d.
             | 
-            d: dispatcherOn: buffer peek.
-            d x00_FF: [renderer renderPrintable: buffer get. ground].
-            d nextState).
+             match: buffer peek
+            X00_1A: [    renderer renderPrintable: buffer get.              ground]
+               X1B: [    buffer get.                                        escape]
+            X1C_47: [    renderer renderPrintable: buffer get.              ground]
+               X48: ["H" buffer get. renderer renderCursorPosition: 1 @ 1.  ground]
+               X49: [            renderer renderPrintable: buffer get.      ground]
+               X4A: ["J" buffer get. renderer renderEraseInDisplay: 0.      ground]
+            X4B_FF: [                renderer renderPrintable: buffer get.  ground]).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'states' -> 'csiEntry' -> () From: ( | {
          'ModuleInfo: Module: tmux InitialContents: FollowSlot'
         
          enter = ( |
-            | renderer clearRenderer).
+            | 
+            renderer clearRenderer).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'states' -> 'csiEntry' -> () From: ( | {
@@ -1276,19 +1306,23 @@ NUL is ignored\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
          'ModuleInfo: Module: tmux InitialContents: FollowSlot'
         
          action: buffer To: renderer = ( |
-             d.
+             c.
             | 
-            d: dispatcherOn: buffer peek.
-            d x00_FF: [renderer renderPrintable: '^'. buffer get. ground].
-            d    x5B: [                             buffer get. csiEntry].
-            d nextState).
+            c: buffer get.
+             match: c
+            X00_1A: [renderer renderPrintable: c.            ground]
+               X1B: [                                        escape]
+            X1C_5A: [renderer renderPrintable: c.            ground]
+               X5B: [                                      csiEntry]
+            X5C_FF: [renderer renderPrintable: c.            ground]).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'states' -> 'escape' -> () From: ( | {
          'ModuleInfo: Module: tmux InitialContents: FollowSlot'
         
          enter = ( |
-            | renderer clearRenderer).
+            | 
+            renderer clearRenderer).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'states' -> 'escape' -> () From: ( | {
@@ -1316,25 +1350,26 @@ NUL is ignored\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
          'ModuleInfo: Module: tmux InitialContents: FollowSlot'
         
          action: buffer To: renderer = ( |
+             c.
              d.
             | 
-            d: dispatcherOn: buffer peek.
-            d x00_06: [buffer get.                                       ground].
-            d    x07: [buffer get. renderer renderBell.                  ground].
-            d    x08: [buffer get. renderer renderBackspace.             ground].
-            d    x09: [buffer get. renderer renderHorizontalTabulation.  ground].
-            d    x0A: [buffer get. renderer renderLineFeed.              ground].
-            d    x0B: [buffer get. renderer renderLineFeed.              ground].
-            d    x0C: [buffer get. renderer renderLineFeed.              ground].
-            d    x0D: [buffer get. renderer renderCarriageReturn.        ground].
-            d x0E_17: [buffer get.                                       ground].
-            d    x18: [buffer get.                                       ground].
-            d    x19: [buffer get.                                       ground].
-            d    x1A: [buffer get.                                       ground].
-            d    x1B: [buffer get.                                       escape].
-            d x1C_1F: [buffer get.                                       ground].  
-            d x20_7F: [            renderer renderPrintable: buffer get. ground].
-            d nextState).
+            c: buffer get.
+             match: c
+            X00_06: [                                      ground]
+               X07: [renderer renderBell.                  ground]
+               X08: [renderer renderBackspace.             ground]
+               X09: [renderer renderHorizontalTabulation.  ground]
+               X0A: [renderer renderLineFeed.              ground]
+               X0B: [renderer renderLineFeed.              ground]
+               X0C: [renderer renderLineFeed.              ground]
+               X0D: [renderer renderCarriageReturn.        ground]
+            X0E_17: [                                      ground]
+               X18: [                                      ground]
+               X19: [                                      ground]
+               X1A: [                                      ground]
+               X1B: [                                      escape]
+            X1C_1F: [                                      ground]
+            X20_7F: [renderer renderPrintable: c.          ground]).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'states' -> 'ground' -> () From: ( | {
@@ -1358,12 +1393,6 @@ NUL is ignored\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
                 ]).
         } | ) 
 
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'states' -> 'shared' -> 'dispatcher' -> () From: ( | {
-         'ModuleInfo: Module: tmux InitialContents: InitializeToExpression: (nil)'
-        
-         char.
-        } | ) 
-
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'states' -> 'shared' -> () From: ( | {
          'ModuleInfo: Module: tmux InitialContents: FollowSlot'
         
@@ -1381,7 +1410,41 @@ NUL is ignored\x7fModuleInfo: Module: tmux InitialContents: FollowSlot'
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'states' -> 'shared' -> () From: ( | {
          'ModuleInfo: Module: tmux InitialContents: FollowSlot'
         
+         ignore = ( |
+            | self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'states' -> 'shared' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
          namespace* = bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'states' -> ().
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'states' -> 'shared' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         parent* = bootstrap stub -> 'traits' -> 'oddball' -> ().
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> 'states' -> 'shared' -> () From: ( | {
+         'ModuleInfo: Module: tmux InitialContents: FollowSlot'
+        
+         undefinedSelector: sel Type: msgType Delegatee: del MethodHolder: mh Arguments: args = ( |
+             tokens.
+            | 
+            tokens: (sel asTokensSeparatedByCharactersIn: ':') asVector.
+            tokens first = 'match' ifFalse: [^ self].
+            (tokens slice: 1 @ infinity) do: [|:token. :i. t. c| 
+              t: token slice: 1 @ infinity.
+              c: args first asByte.
+              (t includes: '_')
+                ifTrue:[| min. max |
+                  min: ((t slice: 0  @ 2) hexAsIntegerIfFail: [^ self]).
+                  max: ((t slice: 3  @ 5) hexAsIntegerIfFail: [^ self]).
+                  (c >= min) && (c <= max) ifTrue: [^ (args at: i + 1) value]]
+                False: [
+                   c = (t hexAsIntegerIfFail: [^ self]) ifTrue: [^ (args at: i + 1) value]]].
+            self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'tmux' -> 'session' -> 'parent' -> () From: ( | {
