@@ -601,46 +601,6 @@ SlotsToOmit: parent prototype.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> () From: ( | {
-         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
-         server = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'server' -> () From: ( |
-             {} = 'ModuleInfo: Creator: globals terminalEmulator server.
-'.
-            | ) .
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'server' -> () From: ( | {
-         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
-         newSession = ( |
-             n.
-            | 
-            n: (random integer: 2 power: 64) hexPrintString.
-            tmuxCommand: 'new-session -s ', n IfFail: [|:e| error: e].
-            session copy name: n).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'server' -> () From: ( | {
-         'Category: support\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
-         tmuxCommand: c IfFail: fb = ( |
-             command.
-             n.
-             out.
-            | 
-            n: (random integer: 2 power: 64) hexPrintString.
-            " This looks overly complicated but is needed, otherwise terminalEmulator writing to the Self console
-              sends a SIGHUP and breaks Self
-            "
-            command: 'terminalEmulator ', c, ' 2>&1'.
-            out: os outputOfCommand: command IfFail: [|:e| ^ fb value: e].
-            os unlink: '/tmp/', n IfFail: [|:e| ^ fb value: e].
-            " Remove wrapping %begin %end "
-            '' = out ifTrue: [^ '']. halt.
-            ((out splitOn: '\n') slice: 1 @ -3) joinUsing: '\n').
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> () From: ( | {
          'Category: prototypes\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
          session = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> () From: ( |
