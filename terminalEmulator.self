@@ -640,7 +640,15 @@ SlotsToOmit: parent prototype.
          'Category: cursor\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
          cursorPositionInView: pt = ( |
-            | rawCursorPosition: pt x @ (( rawCursorPosition y - rawContentsView) + pt y). self).
+             topOfScreen.
+            | 
+            "rawContents height is number of lines in buffer (inlcuding history)
+             rawContentsView is the number of lines in view, assuming bottom of view is bottom of rawContents.
+            "
+            topOfScreen: rawContents height - rawContentsView.
+            rawCursorPosition: pt x @ (topOfScreen + pt y). 
+            rawCursorPosition y <  0 ifTrue: [error: 'Cursor Above Top of Screen'].
+            self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
@@ -845,7 +853,7 @@ Erase various parts of the viewport\x7fModuleInfo: Module: terminalEmulator Init
               str: mutableString copySize: rawContentsView * rawContents width FillingWith: ' '.
               renderPrintableString: str.
               rawCursorPosition: p]
-            False: [render: '[ED', n asString, ']']).
+            False: [self "Ignore"]).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
@@ -941,15 +949,29 @@ implemented.\x7fModuleInfo: Creator: globals terminalEmulator session parent sta
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> 'states' -> 'csiEntry' -> () From: ( | {
          'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
-         action: buffer To: renderer = ( |
+         accumulate: buffer = ( |
+             x <- ''.
             | 
+            [buffer peek isDigit] whileTrue: [x: x, buffer get].
+            x asInteger).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> 'states' -> 'csiEntry' -> () From: ( | {
+         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         action: buffer To: renderer = ( |
+             m <- 0.
+             n <- 0.
+            | 
+            buffer peek isDigit ifTrue: [n: accumulate: buffer].
+            buffer peek asByte = 16r3B ";" ifTrue: [buffer get. m: accumulate: buffer].
              match: buffer peek
             X00_1A: [    renderer renderPrintable: buffer get.              ground]
                X1B: [    buffer get.                                        escape]
             X1C_47: [    renderer renderPrintable: buffer get.              ground]
                X48: ["H" buffer get. renderer renderCursorPosition: 1 @ 1.  ground]
                X49: [            renderer renderPrintable: buffer get.      ground]
-               X4A: ["J" buffer get. renderer renderEraseInDisplay: 0.      ground]
+               X4A: ["J" buffer get. renderer renderEraseInDisplay: n.      ground]
             X4B_FF: [                renderer renderPrintable: buffer get.  ground]).
         } | ) 
 
