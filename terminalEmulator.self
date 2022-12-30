@@ -89,7 +89,7 @@ LICENSE file for license information.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> () From: ( | {
-         'Category: platform\x7fCategory: external programs\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+         'Category: applications\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
          terminalEmulator = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'terminalEmulator' -> () From: ( |
              {} = 'Comment: I give access to the local terminalEmulator
