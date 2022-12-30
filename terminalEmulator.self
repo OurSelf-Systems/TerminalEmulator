@@ -178,6 +178,12 @@ server (assuming one is running).\x7fModuleInfo: Creator: globals terminalEmulat
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'bash' -> () From: ( | {
+         'Category: commands\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         preferredShell = '/bin/sh -i -'.
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'bash' -> () From: ( | {
          'Category: support\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
          randomPort = ( |
@@ -225,7 +231,7 @@ server (assuming one is running).\x7fModuleInfo: Creator: globals terminalEmulat
         
          socat = ( |
             | 
-            'socat TCP4-LISTEN:', port asString, ' EXEC:"/usr/local/bin/bash -li",pty,stderr,setsid,setpgid,sigint,sane,ctty').
+            'socat TCP4-LISTEN:', port asString, ' EXEC:"', preferredShell, '",pty,stderr,setsid,setpgid,sigint,sane,ctty').
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'bash' -> () From: ( | {
