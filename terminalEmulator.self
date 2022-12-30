@@ -83,9 +83,9 @@ LICENSE file for license information.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'modules' -> 'terminalEmulator' -> () From: ( | {
-         'ModuleInfo: Module: terminalEmulator InitialContents: InitializeToExpression: (\'self-terminalEmulator\')'
+         'ModuleInfo: Module: terminalEmulator InitialContents: InitializeToExpression: (\'terminalEmulator\')'
         
-         tree <- 'self-terminalEmulator'.
+         tree <- 'terminalEmulator'.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> () From: ( | {
