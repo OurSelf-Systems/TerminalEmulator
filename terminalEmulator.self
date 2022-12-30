@@ -101,150 +101,6 @@ server (assuming one is running).\x7fModuleInfo: Creator: globals terminalEmulat
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> () From: ( | {
          'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
-         bash = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'bash' -> () From: ( |
-             {} = 'ModuleInfo: Creator: globals terminalEmulator bash.
-'.
-            | ) .
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'bash' -> () From: ( | {
-         'Category: commands\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
-         asDaemon: s = ( |
-            | 'daemon -f ', s).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'bash' -> () From: ( | {
-         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
-         close = ( |
-            | 
-            rawSocket closeIfFail: false. rawPort: 0. self).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'bash' -> () From: ( | {
-         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
-         copy = ( |
-            | 
-            (clone rawPort: 0) rawSocket: os_file deadCopy).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'bash' -> () From: ( | {
-         'Category: support\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
-         escape: s = ( |
-            | s copy replace: '\'' With: '\\\'').
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'bash' -> () From: ( | {
-         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
-         namespace* = bootstrap stub -> 'globals' -> 'terminalEmulator' -> ().
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'bash' -> () From: ( | {
-         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
-         open = ( |
-            | 
-            run: asDaemon: socat.
-            "Time for socat to start listening"
-            process this sleep: 100.
-            openSocketIfFail: [process this sleep: 1000. openSocketIfFail: [|:e| error: e]].
-            self).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'bash' -> () From: ( | {
-         'Category: support\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
-         openSocketIfFail: blk = ( |
-            | 
-            rawSocket: os_file openTCPHost: '127.0.0.1' Port: port asString IfFail: [|:e| ^ blk value: e]. self).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'bash' -> () From: ( | {
-         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
-         parent* = bootstrap stub -> 'traits' -> 'clonable' -> ().
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'bash' -> () From: ( | {
-         'Category: support\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
-         port = ( |
-            | 
-            rawPort = 0 ifTrue: [rawPort: randomPort]. rawPort).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'bash' -> () From: ( | {
-         'Category: commands\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
-         preferredShell = '/bin/sh -i -'.
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'bash' -> () From: ( | {
-         'Category: support\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
-         randomPort = ( |
-            | 
-            random integerBetween: 10000 And: 40000).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'bash' -> () From: ( | {
-         'Category: internal state\x7fModuleInfo: Module: terminalEmulator InitialContents: InitializeToExpression: (0)'
-        
-         rawPort <- 0.
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'bash' -> () From: ( | {
-         'Category: internal state\x7fModuleInfo: Module: terminalEmulator InitialContents: InitializeToExpression: (os_file deadCopy)'
-        
-         rawSocket <- os_file deadCopy.
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'bash' -> () From: ( | {
-         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
-         readIfFail: blk = ( |
-            | 
-            rawSocket readMin: 0 Max: 1024 IfFail: blk).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'bash' -> () From: ( | {
-         'Category: shell out\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
-         run: s = ( |
-            | 
-            os command: s. self).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'bash' -> () From: ( | {
-         'Category: shell out\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
-         runBackground: s = ( |
-            | os command: s,  ' &'. self).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'bash' -> () From: ( | {
-         'Category: commands\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
-         socat = ( |
-            | 
-            'socat TCP4-LISTEN:', port asString, ' EXEC:"', preferredShell, '",pty,stderr,setsid,setpgid,sigint,sane,ctty').
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'bash' -> () From: ( | {
-         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
-         write: s IfFail: blk = ( |
-            | 
-            rawSocket write: s IfFail: blk).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> () From: ( | {
-         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
          buffer = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'buffer' -> () From: ( |
              {} = 'Comment: Buffer for Terminal\x7fModuleInfo: Creator: globals terminalEmulator buffer.
 '.
@@ -793,10 +649,19 @@ SlotsToOmit: parent prototype.
             | ) .
         } | ) 
 
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> () From: ( | {
-         'Category: internal state\x7fModuleInfo: Module: terminalEmulator InitialContents: InitializeToExpression: (terminalEmulator bash)'
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> () From: ( | {
+         'Category: prototypes\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
-         connection <- bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'bash' -> ().
+         shellConnection = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( |
+             {} = 'ModuleInfo: Creator: globals terminalEmulator shellConnection.
+'.
+            | ) .
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> () From: ( | {
+         'Category: internal state\x7fModuleInfo: Module: terminalEmulator InitialContents: InitializeToExpression: (terminalEmulator shellConnection)'
+        
+         connection <- bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> ().
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
@@ -918,7 +783,7 @@ SlotsToOmit: parent prototype.
             | 
             c: copy.
             c incomingBuffer: charBuffer copy.
-            c connection: bash copy open.
+            c connection: shellConnection copy open.
             c rawContents: buffer copy.
             c rawContents size: 80 @ 25.
             c rawContentsView: 25.
@@ -1689,6 +1554,141 @@ implemented.\x7fModuleInfo: Creator: globals terminalEmulator session parent sta
          resize: pt = ( |
             | 
             connection get: 'resize-window -t ', name, ' -x ', pt x asString, ' -y ', pt y asString IfFail: [|:e| error: 'Fail!']. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
+         'Category: commands\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         asDaemon: s = ( |
+            | 'daemon -f ', s).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
+         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         close = ( |
+            | 
+            rawSocket closeIfFail: false. rawPort: 0. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
+         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         copy = ( |
+            | 
+            (clone rawPort: 0) rawSocket: os_file deadCopy).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
+         'Category: support\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         escape: s = ( |
+            | s copy replace: '\'' With: '\\\'').
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
+         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         namespace* = bootstrap stub -> 'globals' -> 'terminalEmulator' -> ().
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
+         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         open = ( |
+            | 
+            run: asDaemon: socat.
+            "Time for socat to start listening"
+            process this sleep: 100.
+            openSocketIfFail: [process this sleep: 1000. openSocketIfFail: [|:e| error: e]].
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
+         'Category: support\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         openSocketIfFail: blk = ( |
+            | 
+            rawSocket: os_file openTCPHost: '127.0.0.1' Port: port asString IfFail: [|:e| ^ blk value: e]. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
+         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         parent* = bootstrap stub -> 'traits' -> 'clonable' -> ().
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
+         'Category: support\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         port = ( |
+            | 
+            rawPort = 0 ifTrue: [rawPort: randomPort]. rawPort).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
+         'Category: commands\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         preferredShell = '/bin/sh -i -'.
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
+         'Category: support\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         randomPort = ( |
+            | 
+            random integerBetween: 10000 And: 40000).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
+         'Category: internal state\x7fModuleInfo: Module: terminalEmulator InitialContents: InitializeToExpression: (0)'
+        
+         rawPort <- 0.
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
+         'Category: internal state\x7fModuleInfo: Module: terminalEmulator InitialContents: InitializeToExpression: (os_file deadCopy)'
+        
+         rawSocket <- os_file deadCopy.
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
+         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         readIfFail: blk = ( |
+            | 
+            rawSocket readMin: 0 Max: 1024 IfFail: blk).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
+         'Category: shell out\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         run: s = ( |
+            | 
+            os command: s. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
+         'Category: shell out\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         runBackground: s = ( |
+            | os command: s,  ' &'. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
+         'Category: commands\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         socat = ( |
+            | 
+            'socat TCP4-LISTEN:', port asString, ' EXEC:"', preferredShell, '",pty,stderr,setsid,setpgid,sigint,sane,ctty').
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
+         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         write: s IfFail: blk = ( |
+            | 
+            rawSocket write: s IfFail: blk).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> () From: ( | {
