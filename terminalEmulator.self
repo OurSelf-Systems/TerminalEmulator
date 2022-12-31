@@ -459,6 +459,27 @@ SlotsToOmit: parent prototype.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> () From: ( | {
+         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         preferences = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'preferences' -> () From: ( |
+             {} = 'ModuleInfo: Creator: globals terminalEmulator preferences.
+'.
+            | ) .
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'preferences' -> () From: ( | {
+         'ModuleInfo: Module: terminalEmulator InitialContents: InitializeToExpression: (terminalEmulator preferences sh)'
+        
+         preferredShellInvocation <- '/bin/sh -i -'.
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'preferences' -> () From: ( | {
+         'Category: shells\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         sh = '/bin/sh -i -'.
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> () From: ( | {
          'Category: prototypes\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
          session = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> () From: ( |
@@ -596,12 +617,12 @@ SlotsToOmit: parent prototype.
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
          'Category: copying\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
-         copyConnected = ( |
+         copyConnectedOnShell: preferredShell = ( |
              c.
             | 
             c: copy.
             c incomingBuffer: charBuffer copy.
-            c connection: shellConnection copy open.
+            c connection: shellConnection copy openOnShell: preferredShell.
             c rawContents: buffer copy.
             c rawContents size: 80 @ 25.
             c rawContentsView: 25.
@@ -1342,9 +1363,9 @@ implemented.\x7fModuleInfo: Creator: globals terminalEmulator session parent sta
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
          'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
-         open = ( |
+         openOnShell: preferredShell = ( |
             | 
-            run: asDaemon: socat.
+            run: asDaemon: socatOnShell: preferredShell.
             "Time for socat to start listening"
             process this sleep: 100.
             openSocketIfFail: [process this sleep: 1000. openSocketIfFail: [|:e| error: e]].
@@ -1371,12 +1392,6 @@ implemented.\x7fModuleInfo: Creator: globals terminalEmulator session parent sta
          port = ( |
             | 
             rawPort = 0 ifTrue: [rawPort: randomPort]. rawPort).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
-         'Category: commands\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
-         preferredShell = '/bin/sh -i -'.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
@@ -1410,14 +1425,6 @@ implemented.\x7fModuleInfo: Creator: globals terminalEmulator session parent sta
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
          'Category: shell out\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
-         run: s = ( |
-            | 
-            os command: s. self).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
-         'Category: shell out\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
          runBackground: s = ( |
             | os command: s,  ' &'. self).
         } | ) 
@@ -1425,9 +1432,8 @@ implemented.\x7fModuleInfo: Creator: globals terminalEmulator session parent sta
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
          'Category: commands\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
-         socat = ( |
-            | 
-            'socat TCP4-LISTEN:', port asString, ' EXEC:"', preferredShell, '",pty,stderr,setsid,setpgid,sigint,sane,ctty').
+         socatOnShell: preferredShell = ( |
+            | 'socat TCP4-LISTEN:', port asString, ' EXEC:"', preferredShell, '",pty,stderr,setsid,setpgid,sigint,sane,ctty').
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
@@ -1485,6 +1491,14 @@ SlotsToOmit: parent prototype.
          'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
          copy = ( |
+            | 
+            copyOnShell: terminalEmulator preferences preferredShellInvocation).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'terminalMorph' -> 'parent' -> () From: ( | {
+         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         copyOnShell: preferredShell = ( |
              cm.
              m.
              rm.
@@ -1494,7 +1508,7 @@ SlotsToOmit: parent prototype.
             m color: paint named: 'outlinerGray'.
             cm: columnMorph copy color: paint named: 'transparent'.
             cm addMorphLast: terminalEmulator morphLabel copyOn: m.
-            m textPane: terminalEmulator tmuxEditorMorph copyOnNewSession.
+            m textPane: terminalEmulator tmuxEditorMorph copyOnNewSessionForShell: preferredShell.
 
             rm: frameMorph copy.
             rm color: paint named: 'outlinerGray'.
@@ -1598,11 +1612,11 @@ SlotsToOmit: parent prototype.
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
          'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
-         copyOnNewSession = ( |
+         copyOnNewSessionForShell: preferredShell = ( |
              n.
              s.
             | 
-            s: terminalEmulator session copyConnected.
+            s: terminalEmulator session copyConnectedOnShell: preferredShell.
             n: copyString: s contents 
                     Style: (| color = paint named: 'white'. fontName = 'courier'. fontSize = 10 | ).
             n tmuxSession: s.
