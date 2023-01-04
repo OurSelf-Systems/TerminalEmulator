@@ -470,7 +470,7 @@ SlotsToOmit: parent prototype.
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'preferences' -> () From: ( | {
          'ModuleInfo: Module: terminalEmulator InitialContents: InitializeToExpression: (terminalEmulator preferences sh)'
         
-         preferredShellInvocation <- '/bin/sh -i -'.
+         preferredShellInvocation <- terminalEmulator preferences sh.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'preferences' -> () From: ( | {
@@ -1420,6 +1420,14 @@ implemented.\x7fModuleInfo: Creator: globals terminalEmulator session parent sta
          readIfFail: blk = ( |
             | 
             rawSocket readMin: 0 Max: 1024 IfFail: blk).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
+         'Category: shell out\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         run: s = ( |
+            | 
+            os command: s).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
