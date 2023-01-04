@@ -467,16 +467,17 @@ SlotsToOmit: parent prototype.
             | ) .
         } | ) 
 
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'preferences' -> () From: ( | {
-         'ModuleInfo: Module: terminalEmulator InitialContents: InitializeToExpression: (terminalEmulator preferences sh)'
-        
-         preferredShellInvocation <- terminalEmulator preferences sh.
-        } | ) 
-
+ 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'preferences' -> () From: ( | {
          'Category: shells\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
          sh = '/bin/sh -i -'.
+        } | ) 
+        
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'preferences' -> () From: ( | {
+         'ModuleInfo: Module: terminalEmulator InitialContents: InitializeToExpression: (terminalEmulator preferences sh)'
+        
+         preferredShellInvocation <- terminalEmulator preferences sh.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> () From: ( | {
