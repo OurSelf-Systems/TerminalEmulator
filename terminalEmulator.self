@@ -467,17 +467,10 @@ SlotsToOmit: parent prototype.
             | ) .
         } | ) 
 
- 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'preferences' -> () From: ( | {
-         'Category: shells\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
-         sh = '/bin/sh -i -'.
-        } | ) 
-        
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'preferences' -> () From: ( | {
-         'ModuleInfo: Module: terminalEmulator InitialContents: InitializeToExpression: (terminalEmulator preferences sh)'
-        
-         preferredShellInvocation <- terminalEmulator preferences sh.
+         preferredShellInvocation <- '/bin/sh -i -'.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> () From: ( | {
@@ -608,14 +601,6 @@ SlotsToOmit: parent prototype.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
-         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
-         contents = ( |
-            | 
-            updateBuffer. rawContents asString).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
          'Category: copying\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
          copyConnectedOnShell: preferredShell = ( |
@@ -628,6 +613,7 @@ SlotsToOmit: parent prototype.
             c rawContents size: 80 @ 25.
             c rawContentsView: 25.
             c rawCursorPosition: 0 @ 0.
+            c startUpdateLoop.
             c).
         } | ) 
 
@@ -703,6 +689,13 @@ SlotsToOmit: parent prototype.
         
          disconnect = ( |
             | connection close. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: update loop\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         handleLoop = ( |
+            | [updateBuffer] loop).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
@@ -812,10 +805,38 @@ SlotsToOmit: parent prototype.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: public state\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         publicStatePrototype = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> 'publicStatePrototype' -> () From: ( |
+             {} = 'ModuleInfo: Creator: globals terminalEmulator session parent publicStatePrototype.
+'.
+            | ) .
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> 'publicStatePrototype' -> () From: ( | {
+         'ModuleInfo: Module: terminalEmulator InitialContents: InitializeToExpression: (\'\')'
+        
+         contents <- ''.
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> 'publicStatePrototype' -> () From: ( | {
+         'ModuleInfo: Module: terminalEmulator InitialContents: InitializeToExpression: (0 @ 0)'
+        
+         cursorPosition <- 0 @ 0.
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> 'publicStatePrototype' -> () From: ( | {
+         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         parent* = bootstrap stub -> 'traits' -> 'clonable' -> ().
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
          'Category: parsing\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
          render: str = ( |
             | 
+            str isEmpty ifTrue: [^ self].
             [str isEmpty ifFalse: [(str copy replace: '\x1B' With: '^') printLine]].
             incomingBuffer putString: str.
             [incomingBuffer isEmpty] whileFalse: [
@@ -1024,6 +1045,16 @@ NUL is ignored\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSl
         
          setViewHeight: h = ( |
             | rawContentsView: h. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: update loop\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         startUpdateLoop = ( |
+            | updateLoop: (
+              process copySend: (message copy receiver: self Selector: 'handleLoop')
+                  CauseOfBirth: 'terminalEmulator session') resume. 
+            self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
@@ -1279,8 +1310,20 @@ implemented.\x7fModuleInfo: Creator: globals terminalEmulator session parent sta
          'Category: parsing\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
          updateBuffer = ( |
+             s.
             | 
-            render: connection readIfFail: ''. self).
+            render: connection readIfFail: ''. 
+            s: publicStatePrototype copy.
+            s contents: rawContents asString.
+            s cursorPosition: cursorPosition.
+            publicState: s.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> () From: ( | {
+         'Category: public state\x7fModuleInfo: Module: terminalEmulator InitialContents: InitializeToExpression: (terminalEmulator session publicStatePrototype)'
+        
+         publicState <- bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> 'publicStatePrototype' -> ().
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> () From: ( | {
@@ -1323,6 +1366,12 @@ implemented.\x7fModuleInfo: Creator: globals terminalEmulator session parent sta
          'Category: internal state\x7fModuleInfo: Module: terminalEmulator InitialContents: InitializeToExpression: (terminalEmulator session states ground)'
         
          renderState <- bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> 'states' -> 'ground' -> ().
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> () From: ( | {
+         'Category: internal state\x7fModuleInfo: Module: terminalEmulator InitialContents: InitializeToExpression: (nil)'
+        
+         updateLoop.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
@@ -1580,12 +1629,14 @@ SlotsToOmit: parent prototype.
          tmuxEditorMorph = bootstrap define: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tmuxEditorMorph' -> () ToBe: bootstrap addSlotsTo: (
              bootstrap remove: 'parent' From:
              bootstrap remove: 'prototype' From:
+             bootstrap remove: 'text' From:
+             bootstrap remove: 'text:' From:
              globals uglyTextEditorMorph copyRemoveAllMorphs ) From: bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tmuxEditorMorph' -> () From: ( |
              {} = 'ModuleInfo: Creator: globals terminalEmulator tmuxEditorMorph.
 
 CopyDowns:
 globals uglyTextEditorMorph. copyRemoveAllMorphs 
-SlotsToOmit: parent prototype.
+SlotsToOmit: parent prototype text text:.
 
 \x7fIsComplete: '.
             | ) .
@@ -1612,7 +1663,6 @@ SlotsToOmit: parent prototype.
          connect = ( |
             | 
             isConnected ifFalse: [
-              updateLoop: (message copy receiver: self Selector: 'refreshTmux') fork.
               startGettingStepped.
               isConnected: true]. 
             self).
@@ -1626,7 +1676,7 @@ SlotsToOmit: parent prototype.
              s.
             | 
             s: terminalEmulator session copyConnectedOnShell: preferredShell.
-            n: copyString: s contents 
+            n: copyString: s publicState contents 
                     Style: (| color = paint named: 'white'. fontName = 'courier'. fontSize = 10 | ).
             n tmuxSession: s.
             n resizeToText.
@@ -1639,8 +1689,6 @@ SlotsToOmit: parent prototype.
          disconnect = ( |
             | 
             isInWorld ifTrue: [stopGettingStepped]. 
-            updateLoop abortIfLive.
-            updateLoop: nullProcess.
             tmuxSession disconnect.
             isConnected: false. self).
         } | ) 
@@ -1677,44 +1725,18 @@ SlotsToOmit: parent prototype.
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
          'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
-         nullProcess = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tmuxEditorMorph' -> 'parent' -> 'nullProcess' -> () From: ( |
-             {} = 'ModuleInfo: Creator: globals terminalEmulator tmuxEditorMorph parent nullProcess.
-'.
-            | ) .
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tmuxEditorMorph' -> 'parent' -> 'nullProcess' -> () From: ( | {
-         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
-         abortIfLive = ( |
-            | self).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
-         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
          parent* = bootstrap stub -> 'traits' -> 'uglyTextEditorMorph' -> ().
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
          'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
-         refreshTmux = ( |
-            | 
-            [
-              tmuxContents: tmuxSession contents.
-              tmuxCursorPosition: tmuxSession cursorPosition.
-            ] loop.
-            self).
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tmuxEditorMorph' -> 'parent' -> () From: ( | {
-         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
-        
          step = ( |
+             s.
             | 
-            " These are changing in background "
-            " Do we need to protect these? "
+            s: tmuxSession publicState.
+            tmuxContents: s contents.
+            tmuxCursorPosition: s cursorPosition.
             tmuxContents = tmuxContentsOld 
               ifFalse: [tmuxContentsOld: tmuxContents. 
                         text setText: tmuxContents.
@@ -1732,6 +1754,12 @@ SlotsToOmit: parent prototype.
         
          prototype = ( |
             | terminalEmulator tmuxEditorMorph).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tmuxEditorMorph' -> () From: ( | {
+         'ModuleInfo: Module: terminalEmulator InitialContents: InitializeToExpression: (nil)'
+        
+         text.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tmuxEditorMorph' -> () From: ( | {
@@ -1762,12 +1790,6 @@ SlotsToOmit: parent prototype.
          'Category: Tmux State\x7fModuleInfo: Module: terminalEmulator InitialContents: InitializeToExpression: (terminalEmulator session)'
         
          tmuxSession <- bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> ().
-        } | ) 
-
- bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tmuxEditorMorph' -> () From: ( | {
-         'Category: Tmux State\x7fModuleInfo: Module: terminalEmulator InitialContents: InitializeToExpression: (terminalEmulator tmuxEditorMorph parent nullProcess)'
-        
-         updateLoop <- bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tmuxEditorMorph' -> 'parent' -> 'nullProcess' -> ().
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> () From: ( | {
@@ -1878,7 +1900,8 @@ SlotsToOmit: parent prototype.
          'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
          refreshContents = ( |
-            | setText: tmuxSession contents. self).
+            | 
+            setText: tmuxSession publicState contents. self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tmuxTextField' -> 'parent' -> () From: ( | {
