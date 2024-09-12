@@ -468,9 +468,9 @@ SlotsToOmit: parent prototype.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'preferences' -> () From: ( | {
-         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+         'ModuleInfo: Module: terminalEmulator InitialContents: InitializeToExpression: (\'/usr/bin/env bash -i -\')'
         
-         preferredShellInvocation <- '/bin/sh -i -'.
+         preferredShellInvocation <- '/usr/bin/env bash -i -'.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> () From: ( | {
@@ -526,7 +526,7 @@ SlotsToOmit: parent prototype.
         
          addNewLinesIfNeeded = ( |
             | 
-            [rawCursorPosition y >= rawContents height] whileTrue: [
+            [cursorPosition y >= rawContents height] whileTrue: [
               rawContents height: rawContents height + 1].
             self).
         } | ) 
@@ -610,9 +610,12 @@ SlotsToOmit: parent prototype.
             c incomingBuffer: charBuffer copy.
             c connection: shellConnection copy openOnShell: preferredShell.
             c rawContents: buffer copy.
-            c rawContents size: 80 @ 25.
+            c rawContents size: initialSize.
             c rawContentsView: 25.
-            c rawCursorPosition: 0 @ 0.
+            c cursorPosition: 0 @ 0.
+            "initial update"
+            c updateBuffer.
+            "now start background loop"
             c startUpdateLoop.
             c).
         } | ) 
@@ -630,9 +633,9 @@ SlotsToOmit: parent prototype.
         
          cursorNext = ( |
             | 
-            rawCursorPosition: rawCursorPosition x succ @ rawCursorPosition y. 
-            rawCursorPosition x >= rawContents width ifTrue: [
-              rawCursorPosition: (rawCursorPosition x - rawContents width) @ rawCursorPosition y succ].
+            cursorPosition: cursorPosition x succ @ cursorPosition y. 
+            cursorPosition x >= rawContents width ifTrue: [
+              cursorPosition: (cursorPosition x - rawContents width) @ cursorPosition y succ].
              addNewLinesIfNeeded.
              self).
         } | ) 
@@ -654,6 +657,15 @@ SlotsToOmit: parent prototype.
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
          'Category: cursor\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
+         cursorPosition: p = ( |
+            | 
+            p y < 0 ifTrue: [error: 'Cursor Above Top of Screen'].
+            rawCursorPosition: p. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: cursor\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
          cursorPositionInView: pt = ( |
              topOfScreen.
             | 
@@ -661,8 +673,7 @@ SlotsToOmit: parent prototype.
              rawContentsView is the number of lines in view, assuming bottom of view is bottom of rawContents.
             "
             topOfScreen: rawContents height - rawContentsView.
-            rawCursorPosition: pt x @ (topOfScreen + pt y). 
-            rawCursorPosition y <  0 ifTrue: [error: 'Cursor Above Top of Screen'].
+            cursorPosition: pt x @ (topOfScreen + pt y). 
             self).
         } | ) 
 
@@ -671,9 +682,9 @@ SlotsToOmit: parent prototype.
         
          cursorPrevious = ( |
             | 
-            rawCursorPosition: rawCursorPosition x pred @ rawCursorPosition y. 
-            rawCursorPosition x < 0 ifTrue: [
-              rawCursorPosition: rawContents width @ rawCursorPosition y pred].
+            cursorPosition: cursorPosition x pred @ cursorPosition y. 
+            cursorPosition x < 0 ifTrue: [
+              cursorPosition: rawContents width @ cursorPosition y pred].
             self).
         } | ) 
 
@@ -688,7 +699,12 @@ SlotsToOmit: parent prototype.
          'Category: copying\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
          disconnect = ( |
-            | connection close. self).
+            | 
+             connection close. 
+            updateLoop
+              ifNil: []
+              IfNotNil: [updateLoop abortIfLive].
+            self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
@@ -696,6 +712,12 @@ SlotsToOmit: parent prototype.
         
          handleLoop = ( |
             | [updateBuffer] loop).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: preferences\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         initialSize = (80)@(25).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
@@ -712,6 +734,13 @@ SlotsToOmit: parent prototype.
          insertDownArrow = ( |
             | 
             insertKey: '\x1b[B'. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: inserting\x7fComment: ^C\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         insertETX = ( |
+            | insertKey: '\x03'. self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
@@ -787,9 +816,9 @@ SlotsToOmit: parent prototype.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
-         'Category: history\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+         'Category: preferences\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
-         maxHistory = 50.
+         maxHistory = 1000.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
@@ -867,7 +896,7 @@ Move the cursor to the beginning of the row\x7fModuleInfo: Module: terminalEmula
         
          renderCarriageReturn = ( |
             | 
-            rawCursorPosition: 0 @ rawCursorPosition y.
+            cursorPosition: 0 @ cursorPosition y.
             self).
         } | ) 
 
@@ -879,11 +908,11 @@ Move the cursor to the beginning of the row\x7fModuleInfo: Module: terminalEmula
              size.
              str.
             | 
-            cp: rawCursorPosition.
-            size: rawContents width - rawCursorPosition x.
+            cp: cursorPosition.
+            size: rawContents width - cursorPosition x.
             str: mutableString copySize: size FillingWith: ' '.
             renderPrintableString: str.
-            rawCursorPosition: cp.
+            cursorPosition: cp.
             self).
         } | ) 
 
@@ -912,8 +941,16 @@ Move cursor to position, default 1 @ 1
         
          renderCursorPosition: pt = ( |
             | 
+            ('CP', pt asString) printLine.
             "Adjust as we use 0 based indexing in internal buffer"
             cursorPositionInView: (pt x - 1) @ (pt y - 1). self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: rendering\x7fComment: Ignore.\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         renderDECSET: n = ( |
+            | self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
@@ -923,13 +960,14 @@ Erase various parts of the viewport\x7fModuleInfo: Module: terminalEmulator Init
          renderEraseInDisplay: n = ( |
              str.
             | 
+            ('ED', n asString) printLine.
             case
              if: 0 = n Then: [| p | 
                "Clear from cursor to end of screen"
-               p: rawCursorPosition.
-               str: mutableString copySize: (rawContentsView - p y) * rawContents width FillingWith: ' '.
+               p: cursorPosition.
+               str: mutableString copySize: (rawContents height - p y) * rawContents width FillingWith: ' '.
                renderPrintableString: str.
-               rawCursorPosition: p]
+               cursorPosition: p]
              If: 1 = n Then: [
                "Clear from top of screen to cursor"
                self]
@@ -956,24 +994,24 @@ Erase parts of the line\x7fModuleInfo: Module: terminalEmulator InitialContents:
             case
              if: 0 = n Then: [| p |
                "Clear from cursor to end of line"
-               p: rawCursorPosition.
+               p: cursorPosition.
                str: mutableString copySize: (rawContents width - p x) FillingWith: ' '.
                renderPrintableString: str.
-               rawCursorPosition: p]
+               cursorPosition: p]
              If: 1 = n Then: [
                "Clear from start of line to cursor"
-               p: rawCursorPosition.
-               rawCursorPosition: 0 @ p y.
+               p: cursorPosition.
+               cursorPosition: 0 @ p y.
                str: mutableString copySize: p y FillingWith: ' '.
                renderPrintableString: str.
-               rawCursorPosition: p]
+               cursorPosition: p]
              If: 2 = n Then: [
                "Clear whole line"
-               p: rawCursorPosition.
-               rawCursorPosition: 0 @ p y.
+               p: cursorPosition.
+               cursorPosition: 0 @ p y.
                str: mutableString copySize: rawContents width FillingWith: ' '.
                renderPrintableString: str.
-               rawCursorPosition: p]
+               cursorPosition: p]
             Else: [self "An error? Ignore"].
             self).
         } | ) 
@@ -987,7 +1025,7 @@ Move the cursor to the next character tab stop.
              s.
              t = 8.
             | 
-            s: '' padOnRight: t - (rawCursorPosition x % t).
+            s: '' padOnRight: t - (cursorPosition x % t).
             renderPrintableString: s.
             self).
         } | ) 
@@ -998,7 +1036,7 @@ Move the cursor one row down, scrolling if neeeded\x7fModuleInfo: Module: termin
         
          renderLineFeed = ( |
             | 
-            rawCursorPosition: rawCursorPosition x @ rawCursorPosition y succ.
+            cursorPosition: cursorPosition x @ cursorPosition y succ.
             addNewLinesIfNeeded.
             self).
         } | ) 
@@ -1020,7 +1058,7 @@ NUL is ignored\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSl
              pc.
             | 
             pc: c isPrintable ifTrue: [c] False: [^ ('\\x', c asByte hexPrintString) do: [|:x| renderPrintable: x]].
-            rawContents at: rawCursorPosition Put: pc IfOutside: [error value]. 
+            rawContents at: cursorPosition Put: pc IfOutside: [error value]. 
             cursorNext.
             self).
         } | ) 
@@ -1030,6 +1068,13 @@ NUL is ignored\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSl
         
          renderPrintableString: str = ( |
             | str do: [|:char| renderPrintable: char]. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: rendering\x7fComment: Character attributes. Ignore.\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         renderSGR: n = ( |
+            | self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
@@ -1100,7 +1145,12 @@ implemented.\x7fModuleInfo: Creator: globals terminalEmulator session parent sta
              match: buffer peek
             X00_1A: [                renderer renderPrintable: buffer get.            ground]
                X1B: [    buffer get.                                                  escape]
-            X1C_42: [                renderer renderPrintable: buffer get.            ground]
+            X1C_3E: [                renderer renderPrintable: buffer get.            ground]
+               X3F: ["?" buffer get. 
+                         n: accumulate: buffer.
+                         'h' = buffer peek ifTrue: [ buffer get. renderer renderDECSET: n. ground]
+                                            False: [ "Error? Ignore." ground]]
+            X40_42: [                renderer renderPrintable: buffer get.            ground]
                X43: ["C" buffer get. renderer renderCursorForward: (n ifNil: 1).      ground]
                X44: ["D" buffer get. renderer  renderCursorBack: (n ifNil: 1).        ground]
             X45_47: [                renderer renderPrintable: buffer get.            ground]
@@ -1108,7 +1158,9 @@ implemented.\x7fModuleInfo: Creator: globals terminalEmulator session parent sta
                X49: [                renderer renderPrintable: buffer get.            ground]
                X4A: ["J" buffer get. renderer renderEraseInDisplay: (n ifNil: 0).     ground]
                X4B: ["K" buffer get. renderer renderEraseInLine: (n ifNil: 0).        ground]
-            X4C_FF: [                renderer renderPrintable: buffer get.            ground]).
+            X4C_6C: [                renderer renderPrintable: buffer get.            ground]
+               X6D: ["m" buffer get. renderer renderSGR: n.                           ground]
+            X6E_FF: [                renderer renderPrintable: buffer get.            ground]).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> 'states' -> 'csiEntry' -> () From: ( | {
@@ -1302,7 +1354,8 @@ implemented.\x7fModuleInfo: Creator: globals terminalEmulator session parent sta
             | 
             t: (rawContents height - rawContentsView - maxHistory) max: 0.
             rawContents trimTop: t.
-            rawCursorPosition: rawCursorPosition x @ (rawCursorPosition y - t).
+            "Cursor position can't be scrolled off top of buffer"
+            cursorPosition: cursorPosition x @ ((cursorPosition y - t) max: 0).
             self).
         } | ) 
 
@@ -1536,6 +1589,21 @@ SlotsToOmit: parent prototype.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'terminalMorph' -> 'parent' -> () From: ( | {
+         'Category: building\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         buildMenuBar = ( |
+             m.
+            | 
+            m: rowMorph copyTransparent.
+            m addMorphLast: labelMorph copy label: 'Insert: '.
+            m addMorphLast: transparentSpacerMorph copyH: 4.
+            m addMorphLast: insertButtonLabel: 'ESC' Key: 'Escape'.
+            m addMorphLast: transparentSpacerMorph copyH: 4.
+            m addMorphLast: insertButtonLabel: '^C' Key: 'ETX'.
+            m).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'terminalMorph' -> 'parent' -> () From: ( | {
          'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
          contributeToBackgroundMenu: m = ( |
@@ -1572,7 +1640,8 @@ SlotsToOmit: parent prototype.
             rm color: paint named: 'outlinerGray'.
             rm frameStyle: rm insetBezelStyle.
             rm borderWidth: 3.
-            rm addMorph: m textPane.
+            rm addMorphLast: m buildMenuBar.
+            rm addMorphLast: m textPane.
 
             cm addMorphLast: rm.
             cm borderWidth: 0.
@@ -1588,6 +1657,18 @@ SlotsToOmit: parent prototype.
         
          disconnect = ( |
             | textPane disconnect. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'terminalMorph' -> 'parent' -> () From: ( | {
+         'Category: building\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         insertButtonLabel: l Key: k = ( |
+             b.
+            | 
+            b: ui2Button copy label: l.
+            b target: self.
+            b script: 'target textPane tmuxSession insert', k.
+            b).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'terminalMorph' -> 'parent' -> () From: ( | {
