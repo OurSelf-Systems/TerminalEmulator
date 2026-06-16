@@ -1694,6 +1694,27 @@ SlotsToOmit: parent prototype.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'terminalMorph' -> 'parent' -> () From: ( | {
+         'Category: launching\x7fComment: Build a terminal on the default shell (preferences preferredShellInvocation) and add it to the desktop. Returns the new morph.\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         launch = ( |
+            | launchOnShell: terminalEmulator preferences preferredShellInvocation).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'terminalMorph' -> 'parent' -> () From: ( | {
+         'Category: launching\x7fComment: Build a terminal on the given shell invocation and add it to the desktop, suspending the desktop UI loop across the add to avoid a startup race. Returns the new morph.\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         launchOnShell: shell = ( |
+             m.
+            | 
+            desktop isOpen ifFalse: [desktop open].
+            desktop stop.
+            m: copyOnShell: shell.
+            desktop add: m.
+            desktop go.
+            m).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'terminalMorph' -> 'parent' -> () From: ( | {
          'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
          morphTypeName = 'terminalEmulator terminalMorph'.
