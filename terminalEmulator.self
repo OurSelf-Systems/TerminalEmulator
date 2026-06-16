@@ -985,6 +985,24 @@ Move cursor to position, default 1 @ 1
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: rendering\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         renderDeleteCharacters: n = ( |
+             p.
+             tail.
+             w.
+            | 
+            p: cursorPosition.
+            w: rawContents width.
+            tail: ''.
+            (p x + n) to: (w - 1) Do: [| :x | tail: tail, (rawContents charAt: x @ p y IfOutside: [' '])].
+            [tail size < (w - p x)] whileTrue: [tail: tail, ' '].
+            renderPrintableString: tail.
+            cursorPosition: p.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
          'Category: rendering\x7fComment: ED - Erase In Display
 Erase various parts of the viewport\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
@@ -1192,7 +1210,9 @@ implemented.\x7fModuleInfo: Creator: globals terminalEmulator session parent sta
                X49: [                renderer renderPrintable: buffer get.            ground]
                X4A: ["J" buffer get. renderer renderEraseInDisplay: (n ifNil: 0).     ground]
                X4B: ["K" buffer get. renderer renderEraseInLine: (n ifNil: 0).        ground]
-            X4C_6C: [                renderer renderPrintable: buffer get.            ground]
+            X4C_6C: [| c | c: buffer get.
+                         (c asByte = 16r50) ifTrue: [ renderer renderDeleteCharacters: (n ifNil: 1). ground]
+                          False: [ renderer renderPrintable: c.                       ground]]
                X6D: ["m" buffer get. renderer renderSGR: n.                           ground]
             X6E_FF: [                renderer renderPrintable: buffer get.            ground]).
         } | ) 
@@ -1913,7 +1933,7 @@ SlotsToOmit: parent prototype.
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
          'Category: assertions\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
-         passCount <- 35.
+         passCount <- 38.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
@@ -1957,6 +1977,7 @@ SlotsToOmit: parent prototype.
             testLineFeed. testTab. testBackspace. testAutowrap. testBell.
             testEraseInLine. testEraseInDisplay.
             testCursorUpDown. testDECPrivateModeNoGarbage. testInsertEscape. testInsertEnter.
+            testDeleteCharacters.
             self).
         } | ) 
 
@@ -2086,6 +2107,28 @@ SlotsToOmit: parent prototype.
             s: newSession.
             s render: 'X'. s render: (csi: '?25h'). s render: 'Y'.
             check: (trimRight: (rowOf: s At: 0)) Is: 'XY' Named: 'DECSET: ESC[?25h consumed (no garbage)'.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: tests\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         testDeleteCharacters = ( |
+             bs.
+             esc.
+             s.
+            | 
+            esc: 27 asCharacter asString.
+            bs: 8 asCharacter asString.
+            s: newSession.
+            s render: 'abcde'. s render: (csi: '1;2H'). s render: (csi: 'P').
+            check: (trimRight: (rowOf: s At: 0)) Is: 'acde' Named: 'DCH: ESC[P deletes one char and shifts'.
+            s: newSession.
+            s render: 'abcde'. s render: (csi: '1;2H'). s render: (csi: '2P').
+            check: (trimRight: (rowOf: s At: 0)) Is: 'ade' Named: 'DCH: ESC[2P deletes two chars'.
+            s: newSession.
+            s render: 'abc'. s render: bs. s render: bs, esc, '[1P', 'c', bs.
+            check: (trimRight: (rowOf: s At: 0)) Is: 'ac' Named: 'DCH: backspace mid-line (no P garbage)'.
             self).
         } | ) 
 
