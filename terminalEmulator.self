@@ -747,16 +747,14 @@ SlotsToOmit: parent prototype.
          'Category: inserting\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
          insertEnter = ( |
-            | 
-            insertKey: '\n'. self).
+            | insertKey: '\r'. self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
          'Category: inserting\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
          insertEscape = ( |
-            | 
-            insertKey: '\x1b\x1b'. self).
+            | insertKey: '\x1b'. self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
@@ -926,6 +924,19 @@ Move the cursor n cells back.\x7fModuleInfo: Module: terminalEmulator InitialCon
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: rendering\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         renderCursorDown: n = ( |
+             top.
+             vy.
+            | 
+            top: rawContents height - rawContentsView.
+            vy: (((cursorPosition y - top) + n) min: (rawContentsView - 1)) max: 0.
+            cursorPositionInView: cursorPosition x @ vy.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
          'Category: rendering\x7fComment: CF - Cursor Forward
 Move the cursor n cells forward.\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
@@ -944,6 +955,26 @@ Move cursor to position, default 1 @ 1
             "Adjust as we use 0 based indexing in internal buffer"
             cursorPositionInView: (pt x - 1) @ (pt y - 1).
             self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: rendering\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         renderCursorUp: n = ( |
+             top.
+             vy.
+            | 
+            top: rawContents height - rawContentsView.
+            vy: ((cursorPosition y - top) - n) max: 0.
+            cursorPositionInView: cursorPosition x @ vy.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
+         'Category: rendering\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         renderDECRST: n = ( |
+            | self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
@@ -1147,8 +1178,13 @@ implemented.\x7fModuleInfo: Creator: globals terminalEmulator session parent sta
                X3F: ["?" buffer get.
                          n: accumulate: buffer.
                          'h' = buffer peek ifTrue: [ buffer get. renderer renderDECSET: n. ground]
-                                            False: [ "Error? Ignore." ground]]
-            X40_42: [                renderer renderPrintable: buffer get.            ground]
+                                            False: [ 'l' = buffer peek
+                                                       ifTrue: [ buffer get. renderer renderDECRST: n. ground]
+                                                        False: [ "Error? Ignore." ground]]]
+            X40_42: [| c | c: buffer get.
+                         (c asByte = 16r41) ifTrue: [ renderer renderCursorUp: (n ifNil: 1).   ground]
+                          False: [(c asByte = 16r42) ifTrue: [ renderer renderCursorDown: (n ifNil: 1). ground]
+                                   False: [ renderer renderPrintable: c.                        ground]]]
                X43: ["C" buffer get. renderer renderCursorForward: (n ifNil: 1).      ground]
                X44: ["D" buffer get. renderer  renderCursorBack: (n ifNil: 1).        ground]
             X45_47: [                renderer renderPrintable: buffer get.            ground]
@@ -1813,6 +1849,42 @@ SlotsToOmit: parent prototype.
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
          'Category: fixture\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
+         mockConn = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> 'mockConn' -> () From: ( |
+             {} = 'ModuleInfo: Creator: globals terminalEmulator tests mockConn.
+'.
+            | ) .
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> 'mockConn' -> () From: ( | {
+         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         parent* = bootstrap stub -> 'traits' -> 'clonable' -> ().
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> 'mockConn' -> () From: ( | {
+         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         recorded <- ''.
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> 'mockConn' -> () From: ( | {
+         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         write: s IfFail: blk = ( |
+            | recorded: recorded, s. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: fixture\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         newInsertSession = ( |
+             s.
+            | s: terminalEmulator session copy. s connection: mockConn copy. s).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: fixture\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
          newSession = ( |
              s.
             | 
@@ -1841,7 +1913,7 @@ SlotsToOmit: parent prototype.
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
          'Category: assertions\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
-         passCount <- 0.
+         passCount <- 35.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
@@ -1881,17 +1953,10 @@ SlotsToOmit: parent prototype.
         
          runAll = ( |
             | 
-            testPrintable.
-            testCursorForwardBack.
-            testCursorPosition.
-            testCarriageReturn.
-            testLineFeed.
-            testTab.
-            testBackspace.
-            testAutowrap.
-            testBell.
-            testEraseInLine.
-            testEraseInDisplay.
+            testPrintable. testCursorForwardBack. testCursorPosition. testCarriageReturn.
+            testLineFeed. testTab. testBackspace. testAutowrap. testBell.
+            testEraseInLine. testEraseInDisplay.
+            testCursorUpDown. testDECPrivateModeNoGarbage. testInsertEscape. testInsertEnter.
             self).
         } | ) 
 
@@ -1997,6 +2062,36 @@ SlotsToOmit: parent prototype.
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
          'Category: tests\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
+         testCursorUpDown = ( |
+             s.
+            | 
+            s: newSession.
+            s render: (csi: '10;5H').
+            s render: (csi: '3A').
+            check: s cursorPosition Is: 4 @ 6 Named: 'CUU: ESC[3A moves up 3'.
+            s render: (csi: '2B').
+            check: s cursorPosition Is: 4 @ 8 Named: 'CUD: ESC[2B moves down 2'.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: tests\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         testDECPrivateModeNoGarbage = ( |
+             s.
+            | 
+            s: newSession.
+            s render: 'X'. s render: (csi: '?25l'). s render: 'Y'.
+            check: (trimRight: (rowOf: s At: 0)) Is: 'XY' Named: 'DECRST: ESC[?25l consumed (no garbage)'.
+            s: newSession.
+            s render: 'X'. s render: (csi: '?25h'). s render: 'Y'.
+            check: (trimRight: (rowOf: s At: 0)) Is: 'XY' Named: 'DECSET: ESC[?25h consumed (no garbage)'.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: tests\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
          testEraseInDisplay = ( |
              s.
             | 
@@ -2026,6 +2121,32 @@ SlotsToOmit: parent prototype.
             s render: 'ABCDEFGH'. s render: (csi: '1;5H'). s render: (csi: '2K').
             check: (trimRight: (rowOf: s At: 0)) Is: ''
               Named: 'EL2: erase whole line'.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: tests\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         testInsertEnter = ( |
+             s.
+            | 
+            s: newInsertSession.
+            s insertEnter.
+            check: s connection recorded size Is: 1 Named: 'insertEnter: one byte'.
+            check: (s connection recorded at: 0) asByte Is: 13 Named: 'insertEnter: byte is CR'.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: tests\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         testInsertEscape = ( |
+             s.
+            | 
+            s: newInsertSession.
+            s insertEscape.
+            check: s connection recorded size Is: 1 Named: 'insertEscape: one byte'.
+            check: (s connection recorded at: 0) asByte Is: 27 Named: 'insertEscape: byte is ESC'.
             self).
         } | ) 
 
