@@ -246,7 +246,7 @@ server (assuming one is running).\x7fModuleInfo: Creator: globals terminalEmulat
          'Category: commands\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
          asDaemon: s = ( |
-            | 'daemon -f ', s).
+            | 'daemon ', s).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'connection' -> () From: ( | {
@@ -708,10 +708,10 @@ SlotsToOmit: parent prototype.
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
-         'Category: update loop\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+         'Category: update loop\x7fComment: Background poll-render loop (forked by startUpdateLoop). The 20ms sleep yields the cooperative scheduler; readMin: 0 is non-blocking so without it this loop busy-spins.\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
          handleLoop = ( |
-            | [updateBuffer] loop).
+            | [updateBuffer. process this sleep: 20] loop).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
@@ -941,9 +941,9 @@ Move cursor to position, default 1 @ 1
         
          renderCursorPosition: pt = ( |
             | 
-            ('CP', pt asString) printLine.
             "Adjust as we use 0 based indexing in internal buffer"
-            cursorPositionInView: (pt x - 1) @ (pt y - 1). self).
+            cursorPositionInView: (pt x - 1) @ (pt y - 1).
+            self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'session' -> 'parent' -> () From: ( | {
@@ -960,9 +960,8 @@ Erase various parts of the viewport\x7fModuleInfo: Module: terminalEmulator Init
          renderEraseInDisplay: n = ( |
              str.
             | 
-            ('ED', n asString) printLine.
             case
-             if: 0 = n Then: [| p | 
+             if: 0 = n Then: [| p |
                "Clear from cursor to end of screen"
                p: cursorPosition.
                str: mutableString copySize: (rawContents height - p y) * rawContents width FillingWith: ' '.
@@ -989,25 +988,24 @@ Erase various parts of the viewport\x7fModuleInfo: Module: terminalEmulator Init
 Erase parts of the line\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
          renderEraseInLine: n = ( |
+             p.
              str.
             | 
+            p: cursorPosition.
             case
-             if: 0 = n Then: [| p |
+             if: 0 = n Then: [
                "Clear from cursor to end of line"
-               p: cursorPosition.
                str: mutableString copySize: (rawContents width - p x) FillingWith: ' '.
                renderPrintableString: str.
                cursorPosition: p]
              If: 1 = n Then: [
-               "Clear from start of line to cursor"
-               p: cursorPosition.
+               "Clear from start of line to and including cursor"
                cursorPosition: 0 @ p y.
-               str: mutableString copySize: p y FillingWith: ' '.
+               str: mutableString copySize: (p x + 1) FillingWith: ' '.
                renderPrintableString: str.
                cursorPosition: p]
              If: 2 = n Then: [
                "Clear whole line"
-               p: cursorPosition.
                cursorPosition: 0 @ p y.
                str: mutableString copySize: rawContents width FillingWith: ' '.
                renderPrintableString: str.
@@ -1146,7 +1144,7 @@ implemented.\x7fModuleInfo: Creator: globals terminalEmulator session parent sta
             X00_1A: [                renderer renderPrintable: buffer get.            ground]
                X1B: [    buffer get.                                                  escape]
             X1C_3E: [                renderer renderPrintable: buffer get.            ground]
-               X3F: ["?" buffer get. 
+               X3F: ["?" buffer get.
                          n: accumulate: buffer.
                          'h' = buffer peek ifTrue: [ buffer get. renderer renderDECSET: n. ground]
                                             False: [ "Error? Ignore." ground]]
@@ -1154,7 +1152,7 @@ implemented.\x7fModuleInfo: Creator: globals terminalEmulator session parent sta
                X43: ["C" buffer get. renderer renderCursorForward: (n ifNil: 1).      ground]
                X44: ["D" buffer get. renderer  renderCursorBack: (n ifNil: 1).        ground]
             X45_47: [                renderer renderPrintable: buffer get.            ground]
-               X48: ["H" buffer get. renderer renderCursorPosition: 1 @ 1.            ground]
+               X48: ["H" buffer get. renderer renderCursorPosition: (m ifNil: 1) @ (n ifNil: 1).  ground]
                X49: [                renderer renderPrintable: buffer get.            ground]
                X4A: ["J" buffer get. renderer renderEraseInDisplay: (n ifNil: 0).     ground]
                X4B: ["K" buffer get. renderer renderEraseInLine: (n ifNil: 0).        ground]
@@ -1431,7 +1429,7 @@ implemented.\x7fModuleInfo: Creator: globals terminalEmulator session parent sta
          'Category: commands\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
          asDaemon: s = ( |
-            | 'daemon -f ', s).
+            | 'daemon ', s).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
@@ -1479,8 +1477,24 @@ implemented.\x7fModuleInfo: Creator: globals terminalEmulator session parent sta
          'Category: support\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
         
          openSocketIfFail: blk = ( |
+             a.
+             addrs.
+             s.
             | 
-            rawSocket: os_file openTCPHost: '127.0.0.1' Port: port asString IfFail: [|:e| ^ blk value: e]. self).
+            addrs: os hostAddressesForName: '127.0.0.1' IfFail: [|:e| ^ blk value: 'hostAddr: ', e].
+            a: addrs first.
+            "pad 4-byte IPv4 addr to 8: the connectSocket primitive wants >= sizeof(long) and the C reads only the first 4 bytes"
+            a size < 8 ifTrue: [a: a, (byteVector copySize: 8 - a size)].
+            s: os_file socketDomain: os_file socketConstants pf_inet
+                       Type: os_file socketConstants sock_stream
+                       Protocol: 0
+                       IfFail: [|:e| ^ blk value: 'socket: ', e].
+            s connectFamily: os_file socketConstants af_inet
+               Port: port asString
+               Address: a
+               IfFail: [|:e| s closeIfFail: []. ^ blk value: 'connect: ', e].
+            rawSocket: s.
+            self).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'shellConnection' -> () From: ( | {
@@ -1702,6 +1716,350 @@ SlotsToOmit: parent prototype.
          'Category: terminalMorph State\x7fModuleInfo: Module: terminalEmulator InitialContents: InitializeToExpression: (nil)'
         
          textPane.
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> () From: ( | {
+         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         tests = bootstrap setObjectAnnotationOf: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( |
+             {} = 'ModuleInfo: Creator: globals terminalEmulator tests.
+'.
+            | ) .
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: fixture\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         ch: n = ( |
+            | n asCharacter asString).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: assertions\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         check: actual Is: expected Named: name = ( |
+            | 
+            check: (actual = expected)
+            Named: name, ' (got ', actual printString,
+                   ' want ', expected printString, ')').
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: assertions\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         check: cond Named: name = ( |
+            | 
+            cond
+              ifTrue: [passCount: passCount + 1]
+               False: [failCount: failCount + 1.
+                       failLog: failLog, '  FAIL: ', name, nl].
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: running\x7fComment: Reentrant public entry: clone the suite and run on the fresh clone, so overlapping or concurrent runs each get their own counters. Use this instead of run for parallel runs.\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         copyRun = ( |
+            | copy run).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: fixture\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         csi: s = ( |
+            | esc, '[', s).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: fixture\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         esc = ( |
+            | 27 asCharacter asString).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: assertions\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         failCount <- 0.
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: assertions\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         failLog <- ''.
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: fixture\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         newSession = ( |
+             s.
+            | 
+            s: terminalEmulator session copy.
+            s incomingBuffer: terminalEmulator session parent charBuffer copy.
+            s rawContents: terminalEmulator buffer copy.
+            s rawContents size: 80 @ 25.
+            s rawContentsView: 25.
+            s cursorPosition: 0 @ 0.
+            s).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: fixture\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         nl = ( |
+            | 10 asCharacter asString).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'ModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         parent* = bootstrap stub -> 'traits' -> 'clonable' -> ().
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: assertions\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         passCount <- 0.
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: assertions\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         resetCounters = ( |
+            | 
+            passCount: 0. failCount: 0. failLog: ''. self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: fixture\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         rowOf: s At: y = ( |
+             out.
+             w.
+            | 
+            w: s rawContents width.
+            out: ''.
+            0 to: w - 1 Do: [| :x |
+              out: out, (s rawContents charAt: x @ y IfOutside: [' '])].
+            out).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: running\x7fComment: Run all tests on the RECEIVER, mutating its counters - NOT reentrant. For overlapping runs use copyRun, which runs this on a fresh clone.\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         run = ( |
+            | 
+            resetCounters.
+            runAll.
+            summary).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: running\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         runAll = ( |
+            | 
+            testPrintable.
+            testCursorForwardBack.
+            testCursorPosition.
+            testCarriageReturn.
+            testLineFeed.
+            testTab.
+            testBackspace.
+            testAutowrap.
+            testBell.
+            testEraseInLine.
+            testEraseInDisplay.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: assertions\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         summary = ( |
+            | 
+            passCount printString, ' passed, ', failCount printString, ' failed', nl,
+            (failCount = 0 ifTrue: ['  all green'] False: [failLog])).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: tests\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         testAutowrap = ( |
+             s.
+            | 
+            s: newSession.
+            s render: ('' padOnRight: 80).
+            check: s cursorPosition Is: 0 @ 1 Named: 'autowrap: cursor wraps after width'.
+            s render: 'AB'.
+            check: (s rawContents charAt: 0 @ 1 IfOutside: ['?']) Is: 'A' Named: 'autowrap: text continues on next row'.
+            check: s cursorPosition Is: 2 @ 1 Named: 'autowrap: cursor past wrapped text'.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: tests\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         testBackspace = ( |
+             s.
+            | 
+            s: newSession.
+            s render: 'ab'.
+            s render: (ch: 8).
+            check: s cursorPosition Is: 1 @ 0 Named: 'backspace: moves cursor left'.
+            check: (trimRight: (rowOf: s At: 0)) Is: 'ab' Named: 'backspace: does not erase'.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: tests\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         testBell = ( |
+             s.
+            | 
+            s: newSession.
+            s render: 'a'.
+            s render: (ch: 7).
+            check: s cursorPosition Is: 1 @ 0 Named: 'bell: no cursor movement'.
+            check: (trimRight: (rowOf: s At: 0)) Is: 'a' Named: 'bell: produces no output'.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: tests\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         testCarriageReturn = ( |
+             s.
+            | 
+            s: newSession.
+            s render: 'abc'.
+            s render: (ch: 13).
+            check: s cursorPosition Is: 0 @ 0 Named: 'CR: cursor to col 0'.
+            s render: 'X'.
+            check: (trimRight: (rowOf: s At: 0)) Is: 'Xbc' Named: 'CR: overwrites from col 0'.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: tests\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         testCursorForwardBack = ( |
+             s.
+            | 
+            s: newSession.
+            s render: (csi: '5C').
+            check: s cursorPosition Is: 5 @ 0 Named: 'CUF: ESC[5C moves right 5'.
+            s render: (csi: '2D').
+            check: s cursorPosition Is: 3 @ 0 Named: 'CUB: ESC[2D moves left 2'.
+            s render: (csi: 'C').
+            check: s cursorPosition Is: 4 @ 0 Named: 'CUF: ESC[C defaults to 1'.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: tests\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         testCursorPosition = ( |
+             s.
+            | 
+            s: newSession.
+            s render: (csi: '5;10H').
+            check: s cursorPosition Is: 9 @ 4 Named: 'CUP: ESC[5;10H -> 0-based 9@4'.
+            s render: (csi: 'H').
+            check: s cursorPosition Is: 0 @ 0 Named: 'CUP: ESC[H homes'.
+            s render: (csi: '3H').
+            check: s cursorPosition Is: 0 @ 2 Named: 'CUP: ESC[3H row only, col defaults'.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: tests\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         testEraseInDisplay = ( |
+             s.
+            | 
+            s: newSession.
+            s render: 'XYZ'.
+            s render: (csi: '2J').
+            check: (trimRight: (rowOf: s At: 0)) Is: '' Named: 'ED2: whole screen cleared'.
+            check: s cursorPosition Is: 0 @ 0 Named: 'ED2: cursor homed'.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: tests\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         testEraseInLine = ( |
+             s.
+            | 
+            s: newSession.
+            s render: 'ABCDEFGH'. s render: (csi: '1;5H'). s render: (csi: '1K').
+            check: (trimRight: (rowOf: s At: 0)) Is: '     FGH'
+              Named: 'EL1: erase start-of-line through cursor (inclusive)'.
+            s: newSession.
+            s render: 'ABCDEFGH'. s render: (csi: '1;5H'). s render: (csi: '0K').
+            check: (trimRight: (rowOf: s At: 0)) Is: 'ABCD'
+              Named: 'EL0: erase cursor to end of line'.
+            s: newSession.
+            s render: 'ABCDEFGH'. s render: (csi: '1;5H'). s render: (csi: '2K').
+            check: (trimRight: (rowOf: s At: 0)) Is: ''
+              Named: 'EL2: erase whole line'.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: tests\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         testLineFeed = ( |
+             s.
+            | 
+            s: newSession.
+            s render: 'a'.
+            s render: (ch: 10).
+            check: s cursorPosition Is: 1 @ 1 Named: 'LF: down a row, keep column'.
+            s render: 'b'.
+            check: (s rawContents charAt: 1 @ 1 IfOutside: ['?']) Is: 'b' Named: 'LF: writes on next row'.
+            check: (trimRight: (rowOf: s At: 0)) Is: 'a' Named: 'LF: prior row intact'.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: tests\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         testPrintable = ( |
+             s.
+            | 
+            s: newSession.
+            s render: 'Hello'.
+            check: (trimRight: (rowOf: s At: 0)) Is: 'Hello' Named: 'printable: text lands in row 0'.
+            check: s cursorPosition Is: 5 @ 0 Named: 'printable: cursor advances'.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: tests\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         testTab = ( |
+             s.
+            | 
+            s: newSession.
+            s render: (ch: 9).
+            check: s cursorPosition Is: 8 @ 0 Named: 'tab: to next 8-col stop'.
+            s render: (ch: 9).
+            check: s cursorPosition Is: 16 @ 0 Named: 'tab: to following stop'.
+            self).
+        } | ) 
+
+ bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> 'tests' -> () From: ( | {
+         'Category: fixture\x7fModuleInfo: Module: terminalEmulator InitialContents: FollowSlot'
+        
+         trimRight: str = ( |
+             i.
+            | 
+            i: str size.
+            [(i > 0) && [(str at: i - 1) = ' ']] whileTrue: [i: i - 1].
+            str copyFrom: 0 UpTo: i).
         } | ) 
 
  bootstrap addSlotsTo: bootstrap stub -> 'globals' -> 'terminalEmulator' -> () From: ( | {
